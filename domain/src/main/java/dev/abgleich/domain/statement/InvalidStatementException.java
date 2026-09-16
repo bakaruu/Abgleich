@@ -14,6 +14,8 @@ public final class InvalidStatementException extends RuntimeException {
     public enum Reason {
         /** Not well-formed, truncated, or a required field is missing or invalid. */
         MALFORMED_FILE,
+        /** No parser recognizes the content of the file. */
+        UNKNOWN_FORMAT,
         /** A known format in a version that is not supported (B13). */
         UNSUPPORTED_VERSION,
         /** Content that is never accepted: DTDs and entities (B08), excessive nesting or text (B42). */

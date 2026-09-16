@@ -24,12 +24,25 @@ import java.util.Objects;
 public record DeduplicationKey(String value) {
 
     public static final int MAX_LENGTH = 128;
+    /** Room left for the "#n" suffix of batch transactions. */
+    private static final int MAX_ENTRY_KEY_LENGTH = MAX_LENGTH - 8;
 
     public DeduplicationKey {
         Objects.requireNonNull(value, "value");
         if (value.isBlank() || value.length() > MAX_LENGTH) {
             throw new IllegalArgumentException("Deduplication key must have between 1 and " + MAX_LENGTH + " characters");
         }
+    }
+
+    /**
+     * The key of one payment inside an entry. An entry with several transactions (B09) is stored
+     * as one row per transaction, so each one needs its own key: {@code <entry key>#<number>}.
+     */
+    public DeduplicationKey forTransaction(int number, int transactionsInEntry) {
+        if (number < 1 || number > transactionsInEntry) {
+            throw new IllegalArgumentException("Transaction number must be between 1 and " + transactionsInEntry);
+        }
+        return transactionsInEntry == 1 ? this : new DeduplicationKey(value + "#" + number);
     }
 
     /** One key per entry, in the same order as {@link Statement#entries()}. */
@@ -39,7 +52,7 @@ public record DeduplicationKey(String value) {
         for (StatementEntry entry : entries) {
             if (entry.bankReference() != null) {
                 String key = "BANK:" + entry.bankReference();
-                keys.add(new DeduplicationKey(key.length() <= MAX_LENGTH ? key : "BANK:" + sha256(key)));
+                keys.add(new DeduplicationKey(key.length() <= MAX_ENTRY_KEY_LENGTH ? key : "BANK:" + sha256(key)));
                 continue;
             }
             String hash = sha256(fingerprint(entry));

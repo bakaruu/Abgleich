@@ -52,6 +52,24 @@ class DeduplicationKeyTest {
     }
 
     @Test
+    void B09_each_transaction_of_a_batch_gets_its_own_key() {
+        DeduplicationKey entryKey = new DeduplicationKey("BANK:BNK20260915000124");
+
+        assertThat(entryKey.forTransaction(1, 1)).isEqualTo(entryKey);
+        assertThat(entryKey.forTransaction(2, 3)).isEqualTo(new DeduplicationKey("BANK:BNK20260915000124#2"));
+    }
+
+    @Test
+    void very_long_bank_reference_is_hashed_and_leaves_room_for_batch_numbers() {
+        StatementEntry entry = new StatementEntry(Money.eur("10.00"), Direction.CREDIT, DAY, null,
+                "R".repeat(200), false, List.of());
+
+        DeduplicationKey key = statement(entry).deduplicationKeys().getFirst();
+
+        assertThat(key.forTransaction(999, 999).value().length()).isLessThanOrEqualTo(DeduplicationKey.MAX_LENGTH);
+    }
+
+    @Test
     void derived_key_fits_the_database_column() {
         DeduplicationKey key = statement(transfer("605.00", "x".repeat(500))).deduplicationKeys().getFirst();
 

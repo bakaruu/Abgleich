@@ -6,6 +6,8 @@ plugins {
 
 dependencies {
     implementation(project(":application"))
+    implementation(project(":adapters:out-camt"))
+    implementation(project(":adapters:out-norma43"))
     implementation(project(":adapters:out-postgres"))
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")

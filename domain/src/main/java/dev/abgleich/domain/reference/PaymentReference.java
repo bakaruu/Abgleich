@@ -25,12 +25,19 @@ public sealed interface PaymentReference {
         }
     }
 
+    /** Any other reference, at most 35 characters like every reference field in ISO 20022. */
     record FreeText(String value) implements PaymentReference {
+
+        public static final int MAX_LENGTH = 35;
+
         public FreeText {
             Objects.requireNonNull(value, "value");
             value = value.strip();
             if (value.isEmpty()) {
                 throw new InvalidReferenceException("Free text reference must not be blank");
+            }
+            if (value.length() > MAX_LENGTH) {
+                throw new InvalidReferenceException("Payment reference must not be longer than " + MAX_LENGTH + " characters");
             }
         }
     }
@@ -42,6 +49,10 @@ public sealed interface PaymentReference {
         return new None();
     }
 
+    /**
+     * Detects the kind of reference. Never fails on typos, but a text longer than 35 characters is
+     * not a reference at all and throws {@link InvalidReferenceException}.
+     */
     static PaymentReference parse(String raw) {
         if (raw == null || raw.isBlank()) {
             return none();

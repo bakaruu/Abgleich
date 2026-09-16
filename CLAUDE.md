@@ -16,10 +16,17 @@ https://claude.ai/artifact/PwSWua5FPB5nCV3cB2c8Sv — read it before starting a 
 
 ## Current phase
 
-F0 foundations (16–22 Sep 2026) — done so far: Gradle multi-module skeleton, value objects
-(`Money`, `QrReference`, `CreditorReference`, `Iban`, `Direction`), ArchUnit rules, Flyway V1 schema
+F0 foundations — done: Gradle multi-module skeleton, value objects, ArchUnit rules, Flyway V1 schema
 with constraint tests, Spring Boot bootstrap, local compose, CI, ADRs 0001–0004.
-Next: F1 import end-to-end (camt.053 + Norma 43 parsers, idempotent import, R1 matching, upload UI).
+
+F1 import end-to-end (started 16 Sep 2026) — done so far:
+1. camt.053.001.04 parser (`adapters/out-camt`) into the format-neutral `Statement` model.
+2. Norma 43 parser (`adapters/out-norma43`) and `DeduplicationKey` (B16).
+3. `StatementParserContract` in `application` test fixtures; every parser extends it.
+4. `ImportStatementService` + `JdbcStatementImportRepository` (Spring JDBC, ADR 0005), V2 migration,
+   B21 concurrent upload test in `bootstrap`.
+Next: 5. `Invoice`/`Allocation` aggregates, rule R1, auto-confirm policy (B22, B27, B28);
+6. REST + "Subir extracto" UI (B32, B35, B42); 7. synthetic data generator.
 
 Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 2026.
 

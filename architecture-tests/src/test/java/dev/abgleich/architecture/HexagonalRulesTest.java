@@ -73,6 +73,20 @@ class HexagonalRulesTest {
     }
 
     @Test
+    void B39_core_never_handles_technical_exceptions() {
+        noClasses().that().resideInAnyPackage(DOMAIN, APPLICATION)
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "java.sql..",
+                        "javax.sql..",
+                        "javax.xml.stream..",
+                        "org.postgresql..",
+                        "org.xml.sax..")
+                .because("adapters translate technical errors into InvalidStatementException, "
+                        + "DuplicateImportException or StorageException")
+                .check(ALL);
+    }
+
+    @Test
     void B40_adapters_do_not_depend_on_other_adapters() {
         slices().matching("dev.abgleich.adapter.(*).(*)..")
                 .should().notDependOnEachOther()

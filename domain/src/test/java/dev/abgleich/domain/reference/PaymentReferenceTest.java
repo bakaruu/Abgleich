@@ -1,6 +1,7 @@
 package dev.abgleich.domain.reference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.abgleich.domain.reference.PaymentReference.FreeText;
 import dev.abgleich.domain.reference.PaymentReference.None;
@@ -39,6 +40,13 @@ class PaymentReferenceTest {
     @Test
     void other_references_are_free_text() {
         assertThat(PaymentReference.parse("  FV2026-0087 ")).isEqualTo(new FreeText("FV2026-0087"));
+    }
+
+    @Test
+    void reference_longer_than_35_characters_is_rejected() {
+        assertThatThrownBy(() -> PaymentReference.parse("x".repeat(36)))
+                .isInstanceOf(InvalidReferenceException.class)
+                .hasMessageContaining("35 characters");
     }
 
     @Test

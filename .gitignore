@@ -24,3 +24,6 @@ application-local.yml
 
 # Real bank data must never be committed (B41)
 **/private-statements/
+
+# jqwik stores failing samples locally
+.jqwik-database
