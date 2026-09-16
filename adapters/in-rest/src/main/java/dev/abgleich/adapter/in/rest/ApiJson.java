@@ -1,6 +1,8 @@
 package dev.abgleich.adapter.in.rest;
 
 import dev.abgleich.application.port.in.ImportedStatement;
+import dev.abgleich.application.port.in.InvoiceQuery;
+import dev.abgleich.application.port.in.ReviewQueueQuery;
 import dev.abgleich.application.port.in.ReconciliationRun;
 import dev.abgleich.application.port.in.StatementReport;
 import dev.abgleich.domain.money.Money;
@@ -32,7 +34,8 @@ final class ApiJson {
         }
     }
 
-    record UploadResponse(String outcome, String format, List<ImportedStatementJson> statements) {
+    record UploadResponse(String outcome, String format, List<ImportedStatementJson> statements,
+            List<EnrichedJson> notifications) {
     }
 
     record ImportedStatementJson(
@@ -91,6 +94,71 @@ final class ApiJson {
                     line.allocationStatus() == null ? null : line.allocationStatus().name(),
                     line.explanation());
         }
+    }
+
+    record ReviewItemJson(UUID transactionId, String version, String account, LocalDate bookingDate, MoneyJson amount,
+            String counterpartyName, String remittanceText, String reference, List<ProposalJson> proposals) {
+
+        static ReviewItemJson of(ReviewQueueQuery.ReviewItem item) {
+            return new ReviewItemJson(item.transactionId(), ETags.of(item.version()), item.account().value(),
+                    item.bookingDate(), MoneyJson.of(item.amount()), item.counterpartyName(), item.remittanceText(),
+                    item.reference(), item.proposals().stream().map(ProposalJson::of).toList());
+        }
+    }
+
+    record ProposalJson(UUID proposalId, String rule, String confidence, String explanation, List<ShareJson> invoices) {
+        static ProposalJson of(ReviewQueueQuery.Proposal proposal) {
+            return new ProposalJson(proposal.groupId(), proposal.rule().name(),
+                    proposal.confidence().value().toPlainString(), proposal.explanation(),
+                    proposal.shares().stream().map(ShareJson::of).toList());
+        }
+    }
+
+    record ShareJson(UUID invoiceId, String invoiceNumber, String debtorName, MoneyJson outstanding, MoneyJson allocated,
+            MoneyJson chargesWrittenOff, String invoiceStatus, LocalDate dueDate) {
+        static ShareJson of(ReviewQueueQuery.Share share) {
+            return new ShareJson(share.invoiceId(), share.invoiceNumber(), share.debtorName(),
+                    MoneyJson.of(share.outstanding()), MoneyJson.of(share.allocated()),
+                    MoneyJson.of(share.chargesWrittenOff()), share.invoiceStatus().name(), share.dueDate());
+        }
+    }
+
+    record RejectRequest(String reason) {
+    }
+
+    record DecisionJson(String outcome, String message) {
+    }
+
+    record InvoiceJson(UUID id, String invoiceNumber, String creditorIban, String debtorName, MoneyJson amount,
+            MoneyJson paidAmount, MoneyJson outstanding, String status, LocalDate dueDate, String reference,
+            String version) {
+        static InvoiceJson of(InvoiceQuery.InvoiceView invoice) {
+            return new InvoiceJson(invoice.id(), invoice.number(), invoice.creditorAccount().value(),
+                    invoice.debtorName(), MoneyJson.of(invoice.amount()), MoneyJson.of(invoice.paidAmount()),
+                    MoneyJson.of(invoice.outstanding()), invoice.status().name(), invoice.dueDate(),
+                    invoice.reference(), ETags.of(invoice.version()));
+        }
+    }
+
+    record AllocationJson(UUID allocationId, UUID transactionId, LocalDate bookingDate, MoneyJson amount,
+            MoneyJson chargesWrittenOff, String rule, String status, String explanation, String decidedBy,
+            Instant decidedAt, String decisionNote) {
+        static AllocationJson of(InvoiceQuery.AllocationView allocation) {
+            return new AllocationJson(allocation.allocationId(), allocation.transactionId(), allocation.bookingDate(),
+                    MoneyJson.of(allocation.amount()), MoneyJson.of(allocation.chargesWrittenOff()),
+                    allocation.rule().name(), allocation.status().name(), allocation.explanation(),
+                    allocation.decidedBy(), allocation.decidedAt(), allocation.decisionNote());
+        }
+    }
+
+    record InvoiceDetailJson(InvoiceJson invoice, List<AllocationJson> allocations) {
+        static InvoiceDetailJson of(InvoiceQuery.InvoiceDetail detail) {
+            return new InvoiceDetailJson(InvoiceJson.of(detail.invoice()),
+                    detail.allocations().stream().map(AllocationJson::of).toList());
+        }
+    }
+
+    record EnrichedJson(String account, int enriched, int alreadyComplete, int unknown, ReconciliationRun reconciliation) {
     }
 
     record RegisterInvoiceRequest(

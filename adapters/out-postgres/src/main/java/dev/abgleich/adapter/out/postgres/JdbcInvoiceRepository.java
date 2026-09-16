@@ -2,6 +2,7 @@ package dev.abgleich.adapter.out.postgres;
 
 import dev.abgleich.application.port.out.DuplicateInvoiceException;
 import dev.abgleich.application.port.out.InvoiceRepositoryPort;
+import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.application.port.out.StorageException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
@@ -12,8 +13,10 @@ import dev.abgleich.domain.reference.PaymentReference;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Currency;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.springframework.dao.DataAccessException;
@@ -49,19 +52,64 @@ public final class JdbcInvoiceRepository implements InvoiceRepositoryPort {
     }
 
     @Override
-    public List<Invoice> findOpen(Iban creditorAccount, Currency currency) {
+    public Optional<Invoice> findById(UUID id) {
+        try {
+            return client.sql("select " + COLUMNS + " from invoice where id = ?")
+                    .param(id)
+                    .query((rs, row) -> invoice(rs))
+                    .optional();
+        } catch (DataAccessException e) {
+            throw new StorageException("The invoice could not be read", e);
+        }
+    }
+
+    @Override
+    public List<Invoice> findCandidates(Iban creditorAccount, Currency currency, PaymentReference reference) {
         try {
             return client.sql("select " + COLUMNS + """
                              from invoice
-                            where creditor_iban = ? and currency = ? and status in ('OPEN', 'PARTIALLY_PAID')
+                            where creditor_iban = ? and currency = ?
+                              and (status in ('OPEN', 'PARTIALLY_PAID') or (reference is not null and reference = ?))
                             order by invoice_number
                             """)
-                    .params(creditorAccount.value(), currency.getCurrencyCode())
+                    .params(creditorAccount.value(), currency.getCurrencyCode(), References.text(reference))
                     .query((rs, row) -> invoice(rs))
                     .list();
         } catch (DataAccessException e) {
-            throw new StorageException("Open invoices could not be read", e);
+            throw new StorageException("Candidate invoices could not be read", e);
         }
+    }
+
+    @Override
+    public void update(Invoice invoice) {
+        try {
+            update(client, invoice);
+        } catch (DataAccessException e) {
+            throw new StorageException("The invoice could not be stored", e);
+        }
+    }
+
+    /** Optimistic locking in SQL: the row changes only if nobody changed it since it was read (B22). */
+    static void update(JdbcClient client, Invoice invoice) {
+        int updated = client.sql("""
+                        update invoice set paid_amount = ?, status = ?, version = version + 1
+                         where id = ? and version = ?
+                        """)
+                .params(invoice.paidAmount().amount(), invoice.status().name(), invoice.id(), invoice.version())
+                .update();
+        if (updated != 1) {
+            throw new StaleDataException("Invoice " + invoice.number() + " changed since it was read");
+        }
+    }
+
+    static List<Invoice> findAll(JdbcClient client, Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return client.sql("select " + COLUMNS + " from invoice where id in (:ids) order by invoice_number")
+                .param("ids", List.copyOf(ids))
+                .query((rs, row) -> invoice(rs))
+                .list();
     }
 
     static Invoice invoice(ResultSet rs) throws SQLException {

@@ -1,0 +1,6 @@
+#abgleich-csv;version=1;account=CH93 0076 2011 6238 5295 7;currency=CHF;opening=2500.00;opening_date=2026-09-14;closing=4648.00;closing_date=2026-09-15
+booking_date;value_date;direction;amount;reference;remittance_text;counterparty_name;end_to_end_id;bank_reference;charges
+2026-09-15;2026-09-15;CREDIT;480.00;RF18539007547034;;Alpenblick Hotel SA;E2E-2026-0142;CSV-0001;
+2026-09-15;2026-09-15;CREDIT;480.00;;"Rechnung 143; vielen Dank";Zürcher Bäckerei Löwen;;CSV-0002;
+2026-09-15;2026-09-16;CREDIT;1200.00;;;"Brunner & Co. AG";;CSV-0003;7.50
+2026-09-15;2026-09-15;DEBIT;12.00;;Kontoführungsgebühr;;;CSV-0004;

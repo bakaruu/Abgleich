@@ -1,28 +1,9 @@
 <!DOCTYPE html>
 <!--/* Bank files are untrusted input: text is always escaped with th:text (B32). */-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Upload statement · Abgleich</title>
-    <meta name="csrf-token" th:content="${_csrf.token}">
-    <meta name="csrf-header" th:content="${_csrf.headerName}">
-    <meta name="htmx-config"
-          content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "4..", "swap": true, "error": false}, {"code": "...", "swap": false, "error": true}]}'>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
-    <script th:src="@{/webjars/htmx.org/2.0.4/dist/htmx.min.js}" defer></script>
-    <script th:src="@{/js/app.js}" defer></script>
-</head>
+<head th:replace="~{layout :: head(title='Upload statement')}"></head>
 <body>
-<header class="topbar">
-    <a class="brand" th:href="@{/}"><span class="cross" aria-hidden="true"></span>Abgleich</a>
-    <nav aria-label="Main">
-        <a class="active" th:href="@{/}" aria-current="page">Upload statement</a>
-        <span class="soon" title="Arrives in phase F2">Review</span>
-        <span class="soon" title="Arrives in phase F2">Invoices</span>
-        <span class="soon" title="Arrives in phase F4">Summary</span>
-    </nav>
-</header>
+<header th:replace="~{layout :: topbar(active='upload')}"></header>
 
 <main class="page">
     <section class="intro">
@@ -36,8 +17,8 @@
           hx-disabled-elt="find button" hx-indicator="find .progress">
         <label for="file">Statement file</label>
         <input id="file" name="file" type="file" required>
-        <p class="hint">camt.053 (ISO 20022: Switzerland and SEPA) or Norma 43 (Spain), up to 20 MB.
-            Use synthetic data only.</p>
+        <p class="hint">camt.053 or camt.054 (ISO 20022: Switzerland and SEPA), Norma 43 (Spain) or Abgleich CSV,
+            up to 20 MB. Use synthetic data only.</p>
         <div class="actions">
             <button type="submit">Upload and reconcile</button>
             <span class="progress htmx-indicator" role="status">Processing…</span>
@@ -80,9 +61,9 @@
 
             <th:block th:each="result : ${results}">
                 <h2 class="file-title" th:if="${result.title() != null}" th:text="${result.title()}">statement.xml</h2>
-                <div class="alert" th:classappend="${result.alreadyImported()} ? 'alert-known' : 'alert-ok'" role="status">
-                    <strong th:text="${result.alreadyImported()} ? 'Already imported.' : 'Imported.'">Imported.</strong>
-                    <span th:if="${result.alreadyImported()}">This file was imported before; nothing was stored twice.</span>
+                <div class="alert" th:classappend="${result.outcomeClass()}" role="status">
+                    <strong th:text="${result.outcomeLabel()}">Imported.</strong>
+                    <span th:text="${result.outcomeText()}">Nothing was stored twice.</span>
                     <span>Format: <span th:text="${result.format()}">camt.053</span></span>
                 </div>
 
@@ -117,7 +98,9 @@
                         </div>
                         <div>
                             <dt>Need review</dt>
-                            <dd class="num" th:text="${account.run().sentToReview()}">0</dd>
+                            <dd class="num"><a th:if="${account.run().sentToReview() > 0}" th:href="@{/review}"
+                                               th:text="${account.run().sentToReview()}">2</a><span
+                                    th:unless="${account.run().sentToReview() > 0}">0</span></dd>
                         </div>
                     </dl>
 
@@ -153,6 +136,17 @@
                             </tbody>
                         </table>
                     </div>
+                </article>
+
+                <article class="account" th:each="notified : ${result.enriched()}">
+                    <header class="account-header">
+                        <h2 th:text="${notified.account()}">CH93 **** **** **** 5295 7</h2>
+                        <span class="badge badge-ok">Notification</span>
+                    </header>
+                    <p th:text="|${notified.enriched()} payments received more details, ${notified.alreadyComplete()} were already complete, ${notified.unknown()} are not in a statement yet.|">
+                        1 payment received more details.</p>
+                    <p class="hint" th:if="${notified.unknown() > 0}">A notification never creates payments: import the
+                        day's camt.053 and upload the notification again to add its details.</p>
                 </article>
             </th:block>
         </div>

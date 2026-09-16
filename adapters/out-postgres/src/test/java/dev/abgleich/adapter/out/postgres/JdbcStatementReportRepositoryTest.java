@@ -53,11 +53,11 @@ class JdbcStatementReportRepositoryTest {
         new JdbcInvoiceRepository(TestDatabase.dataSource()).add(invoice);
         JdbcReconciliationRepository reconciliations =
                 new JdbcReconciliationRepository(TestDatabase.dataSource(), TestDatabase.transactions());
-        PaymentToMatch payment = reconciliations.findUnmatchedCredits(ACCOUNT).stream()
+        PaymentToMatch payment = reconciliations.findPendingCredits(ACCOUNT).stream()
                 .filter(p -> p.reference().equals(SCOR)).findFirst().orElseThrow();
         ReconciliationDecision.AutoConfirmed decision =
                 (ReconciliationDecision.AutoConfirmed) new Matcher().decide(payment, List.of(invoice), NOW);
-        reconciliations.recordConfirmed(payment, decision.allocation(), invoice.withConfirmedPayment(payment.amount()));
+        reconciliations.recordConfirmed(payment, decision.allocations(), List.of(invoice.withConfirmedPayment(payment.amount())));
 
         StatementReport report = reports.findReport(importId).orElseThrow();
 

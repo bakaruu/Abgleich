@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<!--/* Bank files are untrusted input: text is always escaped with th:text (B32). */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title='Review')}"></head>
+<body>
+<header th:replace="~{layout :: topbar(active='review')}"></header>
+
+<main class="page">
+    <section class="intro">
+        <h1>Review</h1>
+        <p>Only exact matches confirm on their own. Everything else waits here with the rule that proposed it and
+            why. When several invoices are about equally likely, all of them are shown and none is chosen.</p>
+    </section>
+
+    <div th:if="${decision != null}" class="alert" th:classappend="${decisionClass}" role="status"
+         th:text="${decision.message()}">Confirmed.</div>
+
+    <p class="empty" th:if="${items.isEmpty()}">Nothing to review. Upload a statement or load the example to see
+        proposals here.</p>
+
+    <article class="review-item" th:each="item : ${items}">
+        <header class="review-payment">
+            <div>
+                <div class="amount num" th:text="${item.amount()}">EUR 1815.00</div>
+                <small class="muted">
+                    <span th:text="${item.bookingDate()}">2026-09-15</span> ·
+                    <span class="mono" th:text="${item.account()}">ES91 **** **** **** 1332</span>
+                </small>
+            </div>
+            <div class="payment-text">
+                <div th:text="${item.counterpartyName()}">TALLERES RUIZ SL</div>
+                <small class="muted" th:text="${item.remittanceText()}">TRANSF TALLERES RUIZ SL FRA 87</small>
+                <small class="muted mono" th:text="${item.reference()}">FV2026-0087</small>
+            </div>
+        </header>
+
+        <section class="proposal" th:each="proposal : ${item.proposals()}">
+            <div class="proposal-rule">
+                <span class="rule" th:text="${proposal.rule()}">R4</span>
+                <small class="muted" th:text="|confidence ${proposal.confidence().value()}|">confidence 0.80</small>
+            </div>
+            <div class="proposal-body">
+                <p class="explanation" th:text="${proposal.explanation()}">Invoice number found in the remittance text.</p>
+                <ul class="shares">
+                    <li th:each="share : ${proposal.shares()}">
+                        <a class="mono" th:href="@{/invoices/{id}(id=${share.invoiceId()})}"
+                           th:text="${share.invoiceNumber()}">FV-2026-0087</a>
+                        <span th:text="${share.debtorName()}">Talleres Ruiz SL</span>
+                        <span class="muted">·
+                            <span th:text="|${share.allocated()} of ${share.outstanding()} outstanding|">EUR 1815.00 of EUR 1815.00 outstanding</span>
+                            <span th:if="${share.chargesWrittenOff().isPositive()}"
+                                  th:text="|+ ${share.chargesWrittenOff()} bank charges|">+ EUR 7.50 bank charges</span>
+                            · due <span th:text="${share.dueDate()}">2026-09-30</span>
+                            <span class="status status-open" th:unless="${share.invoiceStatus().acceptsPayments()}"
+                                  th:text="${share.invoiceStatus()}">PAID</span>
+                        </span>
+                    </li>
+                </ul>
+                <div class="decision-actions">
+                    <form th:action="@{/review/proposals/{id}/confirm(id=${proposal.groupId()})}" method="post"
+                          th:hx-post="@{/review/proposals/{id}/confirm(id=${proposal.groupId()})}"
+                          hx-target="closest article" hx-swap="outerHTML" hx-disabled-elt="find button">
+                        <input type="hidden" name="version" th:value="${item.version()}">
+                        <button type="submit">Confirm</button>
+                    </form>
+                    <form class="reject" th:action="@{/review/proposals/{id}/reject(id=${proposal.groupId()})}"
+                          method="post" th:hx-post="@{/review/proposals/{id}/reject(id=${proposal.groupId()})}"
+                          hx-target="closest article" hx-swap="outerHTML" hx-disabled-elt="find button">
+                        <input type="hidden" name="version" th:value="${item.version()}">
+                        <label class="visually-hidden" th:for="|reason-${proposal.groupId()}|">Reason</label>
+                        <input th:id="|reason-${proposal.groupId()}|" name="reason" type="text" maxlength="500"
+                               placeholder="Reason (optional)">
+                        <button type="submit" class="secondary">Reject</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </article>
+
+    <article class="review-item decided" th:fragment="decision" th:if="${decisionOnly != null}">
+        <div class="alert" th:classappend="${decisionClass}" role="status">
+            <span th:text="${decision.message()}">Confirmed: EUR 1815.00 allocated to FV-2026-0087.</span>
+            <a th:if="${decision.outcome().name() == 'STALE'}" th:href="@{/review}">Reload</a>
+        </div>
+    </article>
+</main>
+</body>
+</html>

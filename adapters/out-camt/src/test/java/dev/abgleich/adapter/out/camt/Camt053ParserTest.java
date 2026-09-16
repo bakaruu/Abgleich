@@ -239,12 +239,32 @@ class Camt053ParserTest {
 
     @Test
     void B13_unsupported_camt_version_is_rejected_explicitly() {
-        String xml = document("urn:iso:std:iso:20022:tech:xsd:camt.053.001.08", statement());
+        String xml = document("urn:iso:std:iso:20022:tech:xsd:camt.053.001.02", statement());
 
         InvalidStatementException rejected = reject(xml);
 
         assertThat(rejected.reason()).isEqualTo(Reason.UNSUPPORTED_VERSION);
-        assertThat(rejected).hasMessage("camt.053 version 001.08 is not supported; supported version: 001.04");
+        assertThat(rejected).hasMessage("camt.053 version 001.02 is not supported; supported versions: 001.04, 001.08");
+    }
+
+    @Test
+    void B13_version_08_is_read_with_its_own_element_paths() {
+        ParsedStatementFile v04 = parseFixture("swiss-day-2026-09-15.xml");
+        ParsedStatementFile v08 = parseFixture("swiss-day-2026-09-15-v08.xml");
+
+        assertThat(v08.format()).isEqualTo(StatementFormat.CAMT053_V08);
+        assertThat(v08.statements()).as("status codes, transaction amounts and party names read from v08 paths")
+                .isEqualTo(v04.statements());
+    }
+
+    @Test
+    void B07_charges_reported_for_a_payment_are_read() {
+        String xml = document(statement().entry(credit("472.50").detail(detail().amount("472.50")))).replace(
+                "</AmtDtls>", "</AmtDtls><Chrgs><Rcrd><Amt Ccy=\"CHF\">5.00</Amt></Rcrd><Rcrd><Amt Ccy=\"CHF\">2.50</Amt></Rcrd></Chrgs>");
+
+        TransactionDetail detail = parse(xml).statements().getFirst().entries().getFirst().details().getFirst();
+
+        assertThat(detail.charges()).isEqualTo(Money.chf("7.50"));
     }
 
     @Test

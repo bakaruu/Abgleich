@@ -25,9 +25,11 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -43,38 +45,41 @@ class ReconcileServiceTest {
             Clock.fixed(NOW, ZoneOffset.UTC));
 
     @Test
-    void confirms_r1_matches_and_counts_every_outcome() {
-        Invoice invoice = invoice("F-2026-0142", "480.00", SCOR);
-        invoices.add(invoice);
-        reconciliations.unmatched.add(credit("480.00", SCOR));
-        reconciliations.unmatched.add(credit("99.00", PaymentReference.none()));
+    void confirms_r1_proposes_the_rest_and_counts_every_outcome() {
+        Invoice exact = invoice("F-2026-0142", "480.00", SCOR);
+        invoices.add(exact);
+        invoices.add(invoice("FV-2026-0087", "1815.00", PaymentReference.none()));
+        reconciliations.pending.add(credit("480.00", SCOR, null));
+        reconciliations.pending.add(credit("1815.00", PaymentReference.none(), "FRA 87"));
+        reconciliations.pending.add(credit("99.00", PaymentReference.none(), "Spende"));
 
         ReconciliationRun run = service.reconcilePending(ACCOUNT);
 
-        assertThat(run).isEqualTo(new ReconciliationRun(2, 1, 0, 1, 0, 0));
-        assertThat(reconciliations.confirmed).singleElement()
-                .extracting(Allocation::status).isEqualTo(AllocationStatus.CONFIRMED);
-        assertThat(invoices.byId.get(invoice.id()).status()).isEqualTo(InvoiceStatus.PAID);
+        assertThat(run).isEqualTo(new ReconciliationRun(3, 1, 1, 1, 0, 0, 0));
+        assertThat(reconciliations.confirmed).singleElement().extracting(Allocation::status).isEqualTo(AllocationStatus.CONFIRMED);
+        assertThat(invoices.byId.get(exact.id()).status()).isEqualTo(InvoiceStatus.PAID);
+        assertThat(reconciliations.proposed).singleElement().extracting(Allocation::rule)
+                .isEqualTo(dev.abgleich.domain.matching.MatchRule.R4);
     }
 
     @Test
-    void B28_tie_is_stored_as_proposals() {
-        invoices.add(invoice("F-2026-0199", "480.00", SCOR));
-        invoices.add(invoice("F-2026-0200", "480.00", SCOR));
-        reconciliations.unmatched.add(credit("480.00", SCOR));
+    void rejected_proposals_are_not_proposed_again() {
+        Invoice invoice = invoice("FV-2026-0087", "1815.00", PaymentReference.none());
+        invoices.add(invoice);
+        PaymentToMatch payment = credit("1815.00", PaymentReference.none(), "FRA 87");
+        reconciliations.pending.add(payment);
+        reconciliations.rejected.put(payment.transactionId(), Set.of(Set.of(invoice.id())));
 
         ReconciliationRun run = service.reconcilePending(ACCOUNT);
 
-        assertThat(run.sentToReview()).isEqualTo(1);
-        assertThat(reconciliations.proposed).hasSize(2);
-        assertThat(reconciliations.confirmed).isEmpty();
+        assertThat(run.unmatched()).isEqualTo(1);
+        assertThat(reconciliations.proposed).isEmpty();
     }
 
     @Test
     void B22_payment_decided_by_a_concurrent_run_is_not_decided_twice() {
         invoices.add(invoice("F-2026-0142", "480.00", SCOR));
-        PaymentToMatch payment = credit("480.00", SCOR);
-        reconciliations.unmatched.add(payment);
+        reconciliations.pending.add(credit("480.00", SCOR, null));
         reconciliations.staleWrites = 1;
         reconciliations.decidedElsewhere = true;
 
@@ -88,21 +93,21 @@ class ReconcileServiceTest {
     void B22_invoice_paid_by_a_concurrent_run_is_decided_again_with_fresh_data() {
         Invoice invoice = invoice("F-2026-0142", "480.00", SCOR);
         invoices.add(invoice);
-        reconciliations.unmatched.add(credit("480.00", SCOR));
+        reconciliations.pending.add(credit("480.00", SCOR, null));
         reconciliations.staleWrites = 1;
-        // Meanwhile another payment paid the invoice.
         reconciliations.onStale = () -> invoices.byId.put(invoice.id(), invoice.withConfirmedPayment(Money.chf("480.00")));
 
         ReconciliationRun run = service.reconcilePending(ACCOUNT);
 
-        assertThat(run.unmatched()).as("the invoice is no longer open").isEqualTo(1);
+        assertThat(run.sentToReview()).as("now a possible duplicate payment of a paid invoice (B31)").isEqualTo(1);
         assertThat(reconciliations.confirmed).isEmpty();
+        assertThat(reconciliations.proposed.getFirst().explanation()).contains("possible duplicate payment");
     }
 
     @Test
     void B22_payment_that_keeps_conflicting_is_left_for_the_next_run() {
         invoices.add(invoice("F-2026-0142", "480.00", SCOR));
-        reconciliations.unmatched.add(credit("480.00", SCOR));
+        reconciliations.pending.add(credit("480.00", SCOR, null));
         reconciliations.staleWrites = Integer.MAX_VALUE;
 
         ReconciliationRun run = service.reconcilePending(ACCOUNT);
@@ -111,14 +116,36 @@ class ReconcileServiceTest {
         assertThat(reconciliations.writeAttempts).isEqualTo(ReconcileService.MAX_ATTEMPTS);
     }
 
+    @Test
+    void B10_bank_reversal_undoes_the_confirmed_payment_with_a_note() {
+        Invoice paid = invoice("F-2026-0142", "480.00", SCOR).withConfirmedPayment(Money.chf("480.00"));
+        Allocation confirmed = Allocation.propose(UUID.randomUUID(), paid.id(), UUID.randomUUID(), Money.chf("480.00"),
+                null, dev.abgleich.domain.matching.MatchRule.R1, "exact", NOW).confirm(Allocation.SYSTEM, NOW);
+        PaymentToMatch reversal = new PaymentToMatch(UUID.randomUUID(), ACCOUNT, Direction.DEBIT, Money.chf("480.00"),
+                SCOR, null, null, null, null, true, LocalDate.of(2026, 9, 17), 0);
+        reconciliations.reversals.add(reversal);
+        reconciliations.original = new ReconciliationRepositoryPort.ReversedPayment(confirmed.transactionId(), 1,
+                List.of(confirmed), List.of(paid));
+
+        ReconciliationRun run = service.reconcilePending(ACCOUNT);
+
+        assertThat(run.reversed()).isEqualTo(1);
+        assertThat(reconciliations.reversedAllocations).singleElement().satisfies(allocation -> {
+            assertThat(allocation.status()).isEqualTo(AllocationStatus.REVERSED);
+            assertThat(allocation.decisionNote()).isEqualTo("Reversed by the bank on 2026-09-17 (CHF 480.00)");
+        });
+        assertThat(reconciliations.reopenedInvoices).singleElement()
+                .extracting(Invoice::status).isEqualTo(InvoiceStatus.OPEN);
+    }
+
     private static Invoice invoice(String number, String amount, PaymentReference reference) {
         return Invoice.register(UUID.randomUUID(), InvoiceNumber.of(number), ACCOUNT, "Keller GmbH",
                 Money.chf(amount), reference, LocalDate.of(2026, 9, 30));
     }
 
-    private static PaymentToMatch credit(String amount, PaymentReference reference) {
-        return new PaymentToMatch(UUID.randomUUID(), ACCOUNT, Direction.CREDIT, Money.chf(amount), reference,
-                LocalDate.of(2026, 9, 15), 0);
+    private static PaymentToMatch credit(String amount, PaymentReference reference, String text) {
+        return new PaymentToMatch(UUID.randomUUID(), ACCOUNT, Direction.CREDIT, Money.chf(amount), reference, text,
+                null, null, null, false, LocalDate.of(2026, 9, 15), 0);
     }
 
     private static final class FakeInvoices implements InvoiceRepositoryPort {
@@ -130,43 +157,82 @@ class ReconcileServiceTest {
         }
 
         @Override
-        public List<Invoice> findOpen(Iban creditorAccount, Currency currency) {
-            return byId.values().stream().filter(i -> i.status().acceptsPayments()).toList();
+        public Optional<Invoice> findById(UUID id) {
+            return Optional.ofNullable(byId.get(id));
+        }
+
+        @Override
+        public List<Invoice> findCandidates(Iban creditorAccount, Currency currency, PaymentReference reference) {
+            return byId.values().stream()
+                    .filter(i -> i.status().acceptsPayments() || i.reference().equals(reference))
+                    .toList();
+        }
+
+        @Override
+        public void update(Invoice invoice) {
+            byId.put(invoice.id(), invoice);
         }
     }
 
     private final class FakeReconciliations implements ReconciliationRepositoryPort {
-        private final List<PaymentToMatch> unmatched = new ArrayList<>();
+        private final List<PaymentToMatch> pending = new ArrayList<>();
+        private final List<PaymentToMatch> reversals = new ArrayList<>();
+        private final Map<UUID, Set<Set<UUID>>> rejected = new HashMap<>();
         private final List<Allocation> confirmed = new ArrayList<>();
         private final List<Allocation> proposed = new ArrayList<>();
+        private final List<Allocation> reversedAllocations = new ArrayList<>();
+        private final List<Invoice> reopenedInvoices = new ArrayList<>();
+        private ReversedPayment original;
         private int staleWrites;
         private int writeAttempts;
         private boolean decidedElsewhere;
         private Runnable onStale = () -> { };
 
         @Override
-        public List<PaymentToMatch> findUnmatchedCredits(Iban account) {
-            return List.copyOf(unmatched);
+        public List<PaymentToMatch> findPendingCredits(Iban account) {
+            return List.copyOf(pending);
         }
 
         @Override
-        public Optional<PaymentToMatch> findUnmatchedCredit(UUID transactionId) {
+        public Optional<PaymentToMatch> findPendingCredit(UUID transactionId) {
             return decidedElsewhere
                     ? Optional.empty()
-                    : unmatched.stream().filter(p -> p.transactionId().equals(transactionId)).findFirst();
+                    : pending.stream().filter(p -> p.transactionId().equals(transactionId)).findFirst();
         }
 
         @Override
-        public void recordConfirmed(PaymentToMatch payment, Allocation allocation, Invoice paidInvoice) {
+        public Set<Set<UUID>> rejectedInvoiceSets(UUID transactionId) {
+            return rejected.getOrDefault(transactionId, new HashSet<>());
+        }
+
+        @Override
+        public void recordConfirmed(PaymentToMatch payment, List<Allocation> allocations, List<Invoice> settledInvoices) {
             failIfStale();
-            confirmed.add(allocation);
-            invoices.byId.put(paidInvoice.id(), paidInvoice);
+            confirmed.addAll(allocations);
+            settledInvoices.forEach(invoice -> invoices.byId.put(invoice.id(), invoice));
         }
 
         @Override
         public void recordProposals(PaymentToMatch payment, List<Allocation> proposals) {
             failIfStale();
             proposed.addAll(proposals);
+        }
+
+        @Override
+        public List<PaymentToMatch> findPendingReversals(Iban account) {
+            return List.copyOf(reversals);
+        }
+
+        @Override
+        public Optional<ReversedPayment> findReversedCredit(PaymentToMatch reversal) {
+            return Optional.ofNullable(original);
+        }
+
+        @Override
+        public void recordReversal(PaymentToMatch reversal, ReversedPayment payment, List<Allocation> allocations,
+                List<Invoice> reopened) {
+            reversedAllocations.addAll(allocations);
+            reopenedInvoices.addAll(reopened);
         }
 
         private void failIfStale() {

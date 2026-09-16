@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!--/* Shared page parts. Bank files are untrusted input: text is always escaped with th:text (B32). */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|${title} · Abgleich|">Abgleich</title>
+    <meta name="csrf-token" th:content="${_csrf.token}">
+    <meta name="csrf-header" th:content="${_csrf.headerName}">
+    <meta name="htmx-config"
+          content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "4..", "swap": true, "error": false}, {"code": "...", "swap": false, "error": true}]}'>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/webjars/htmx.org/2.0.4/dist/htmx.min.js}" defer></script>
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+<header class="topbar" th:fragment="topbar(active)">
+    <a class="brand" th:href="@{/}"><span class="cross" aria-hidden="true"></span>Abgleich</a>
+    <nav aria-label="Main">
+        <a th:href="@{/}" th:classappend="${active == 'upload'} ? 'active'"
+           th:attr="aria-current=${active == 'upload'} ? 'page' : null">Upload statement</a>
+        <a th:href="@{/review}" th:classappend="${active == 'review'} ? 'active'"
+           th:attr="aria-current=${active == 'review'} ? 'page' : null">Review
+            <span class="count" th:if="${pendingReview > 0}" th:text="${pendingReview}">3</span></a>
+        <a th:href="@{/invoices}" th:classappend="${active == 'invoices'} ? 'active'"
+           th:attr="aria-current=${active == 'invoices'} ? 'page' : null">Invoices</a>
+        <span class="soon" title="Arrives in phase F4">Summary</span>
+    </nav>
+</header>
+</body>
+</html>

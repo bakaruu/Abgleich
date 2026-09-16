@@ -72,9 +72,9 @@ class ReconciliationIntegrationTest {
         ReconciliationRun regular = reconcile.reconcilePending(REGULAR_ACCOUNT);
 
         assertThat(qr).as("QR payment and the batch of three; the fee is a debit")
-                .isEqualTo(new ReconciliationRun(4, 4, 0, 0, 0, 0));
-        assertThat(regular).as("SCOR payment; free text and no reference wait for rules R4 and R5")
-                .isEqualTo(new ReconciliationRun(3, 1, 0, 2, 0, 0));
+                .isEqualTo(new ReconciliationRun(4, 4, 0, 0, 0, 0, 0));
+        assertThat(regular).as("SCOR payment confirmed; \"Rechnung 143\" proposed by R4; Brunner matches no invoice")
+                .isEqualTo(new ReconciliationRun(3, 1, 1, 1, 0, 0, 0));
         assertThat(jdbc.queryForList("select invoice_number from invoice where status = 'PAID' order by 1", String.class))
                 .containsExactly("F-2026-0141", "F-2026-0142", "F-2026-0151", "F-2026-0152", "F-2026-0153");
         assertThat(jdbc.queryForObject("select count(*) from allocation where status = 'CONFIRMED' and rule = 'R1'",
@@ -89,7 +89,7 @@ class ReconciliationIntegrationTest {
 
         ReconciliationRun again = reconcile.reconcilePending(REGULAR_ACCOUNT);
 
-        assertThat(again).isEqualTo(new ReconciliationRun(2, 0, 0, 2, 0, 0));
+        assertThat(again).isEqualTo(new ReconciliationRun(2, 0, 0, 2, 0, 0, 0));
         assertThat(jdbc.queryForObject("select count(*) from allocation", Integer.class)).isEqualTo(1);
     }
 
@@ -135,8 +135,10 @@ class ReconciliationIntegrationTest {
                 .containsEntry("version", 1L)
                 .extractingByKey("paid_amount").isEqualTo(new java.math.BigDecimal("480.00"));
         assertThat(jdbc.queryForList("select status from bank_transaction where reference = ? order by status",
-                String.class, SCOR)).containsExactly("MATCHED", "UNMATCHED");
-        assertThat(jdbc.queryForObject("select count(*) from allocation", Integer.class)).isEqualTo(1);
+                String.class, SCOR)).as("the second payment goes to review as a possible duplicate (B31)")
+                .containsExactly("MATCHED", "PROPOSED");
+        assertThat(jdbc.queryForList("select status from allocation order by status", String.class))
+                .containsExactly("CONFIRMED", "PROPOSED");
     }
 
     /** The same camt file one day later with new bank references: its SCOR payment is a second, real payment. */

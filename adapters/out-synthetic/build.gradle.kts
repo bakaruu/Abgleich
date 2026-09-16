@@ -6,3 +6,11 @@ plugins {
 dependencies {
     implementation(project(":application"))
 }
+
+// ./gradlew evaluateMatching: precision per rule over the labelled dataset; fails on any wrong auto-confirmation.
+tasks.register<JavaExec>("evaluateMatching") {
+    group = "verification"
+    description = "Runs the matcher over 300 labelled payments and prints precision and recall per rule."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "dev.abgleich.adapter.out.synthetic.evaluation.EvaluateMatching"
+}

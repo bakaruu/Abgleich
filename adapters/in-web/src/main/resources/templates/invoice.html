@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--/* Bank files are untrusted input: text is always escaped with th:text (B32). */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title=${detail.invoice().number()})}"></head>
+<body>
+<header th:replace="~{layout :: topbar(active='invoices')}"></header>
+
+<main class="page" th:with="invoice=${detail.invoice()}">
+    <p><a th:href="@{/invoices}">← All invoices</a></p>
+
+    <div th:if="${decision != null}" class="alert" th:classappend="${decisionClass}" role="status"
+         th:text="${decision.message()}">Invoice cancelled.</div>
+
+    <header class="account-header">
+        <h1 class="mono" th:text="${invoice.number()}">F-2026-0142</h1>
+        <span class="status" th:classappend="|status-${#strings.toLowerCase(invoice.status())}|"
+              th:text="${invoice.status()}">OPEN</span>
+    </header>
+
+    <dl class="figures">
+        <div><dt>Debtor</dt><dd th:text="${invoice.debtorName()}">Alpenblick Hotel SA</dd></div>
+        <div><dt>Amount</dt><dd class="num" th:text="${invoice.amount()}">CHF 480.00</dd></div>
+        <div><dt>Paid</dt><dd class="num" th:text="${invoice.paidAmount()}">CHF 0.00</dd></div>
+        <div><dt>Outstanding</dt><dd class="num" th:text="${invoice.outstanding()}">CHF 480.00</dd></div>
+        <div><dt>Due</dt><dd th:text="${invoice.dueDate()}">2026-09-30</dd></div>
+        <div><dt>Creditor account</dt><dd class="mono" th:text="${invoice.creditorAccount()}">CH93 ****</dd></div>
+        <div><dt>Reference</dt><dd class="mono" th:text="${invoice.reference() ?: 'none'}">RF18539007547034</dd></div>
+    </dl>
+
+    <form th:if="${invoice.status().acceptsPayments() and invoice.paidAmount().isZero()}"
+          th:action="@{/invoices/{id}/cancel(id=${invoice.id()})}" method="post">
+        <input type="hidden" name="version" th:value="${invoice.version()}">
+        <button type="submit" class="secondary">Cancel invoice</button>
+    </form>
+
+    <h2 class="section-title">Allocation history</h2>
+    <p class="empty" th:if="${detail.allocations().isEmpty()}">No payment has been allocated or proposed yet.</p>
+    <div class="table-wrap" th:unless="${detail.allocations().isEmpty()}">
+        <table>
+            <thead>
+            <tr>
+                <th scope="col">Payment</th>
+                <th scope="col" class="right">Allocated</th>
+                <th scope="col">Rule</th>
+                <th scope="col">Status</th>
+                <th scope="col">Why and who</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="allocation : ${detail.allocations()}">
+                <td>
+                    <div class="num" th:text="${allocation.transactionAmount()}">CHF 480.00</div>
+                    <small class="muted" th:text="|${allocation.bookingDate()} · ${allocation.counterpartyName() ?: 'unknown payer'}|">2026-09-15</small>
+                </td>
+                <td class="right nowrap num">
+                    <span th:text="${allocation.amount()}">CHF 480.00</span>
+                    <small class="muted" th:if="${allocation.chargesWrittenOff().isPositive()}"
+                           th:text="|+ ${allocation.chargesWrittenOff()} charges|">+ CHF 7.50 charges</small>
+                </td>
+                <td th:text="${allocation.rule()}">R1</td>
+                <td><span class="status" th:classappend="|status-${#strings.toLowerCase(allocation.status())}|"
+                          th:text="${allocation.status()}">CONFIRMED</span></td>
+                <td>
+                    <small th:text="${allocation.explanation()}">Creditor reference and amount match exactly.</small>
+                    <small class="muted" th:if="${allocation.decidedBy() != null}"
+                           th:text="|${allocation.decidedBy()}, ${allocation.decidedAt()}|">system, 2026-09-16T06:00:00Z</small>
+                    <small class="muted" th:text="${allocation.decisionNote()}">Reversed by the bank.</small>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

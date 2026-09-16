@@ -13,23 +13,30 @@ public sealed interface ReconciliationDecision {
         }
     }
 
-    /** One certain match, confirmed without a human (only R1, B27). */
-    record AutoConfirmed(Allocation allocation) implements ReconciliationDecision {
+    /** One certain match, confirmed without a person: only rule R1 with a single invoice (B27). */
+    record AutoConfirmed(List<Allocation> allocations) implements ReconciliationDecision {
         public AutoConfirmed {
-            Objects.requireNonNull(allocation, "allocation");
-            if (allocation.status() != AllocationStatus.CONFIRMED) {
-                throw new IllegalArgumentException("An auto-confirmed decision holds a confirmed allocation");
+            allocations = List.copyOf(allocations);
+            if (allocations.isEmpty() || allocations.stream().anyMatch(a -> a.status() != AllocationStatus.CONFIRMED)) {
+                throw new IllegalArgumentException("An auto-confirmed decision holds confirmed allocations");
             }
         }
     }
 
-    /** Proposals a person must confirm or reject, in a stable order (B28). */
+    /**
+     * Proposals a person confirms or rejects, best first. Allocations with the same group id belong to
+     * one proposal; several groups mean the candidates were too close to choose (B28).
+     */
     record NeedsReview(List<Allocation> proposals) implements ReconciliationDecision {
         public NeedsReview {
             proposals = List.copyOf(proposals);
             if (proposals.isEmpty() || proposals.stream().anyMatch(p -> p.status() != AllocationStatus.PROPOSED)) {
                 throw new IllegalArgumentException("A review needs at least one proposed allocation");
             }
+        }
+
+        public long groups() {
+            return proposals.stream().map(Allocation::groupId).distinct().count();
         }
     }
 }

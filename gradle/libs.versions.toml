@@ -3,6 +3,7 @@ spring-boot = "4.1.1"
 archunit = "1.5.0"
 jqwik = "1.10.1"
 htmx = "2.0.4"
+commons-csv = "1.14.0"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -14,6 +15,7 @@ assertj-core = { module = "org.assertj:assertj-core" }
 jqwik = { module = "net.jqwik:jqwik", version.ref = "jqwik" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
+commons-csv = { module = "org.apache.commons:commons-csv", version.ref = "commons-csv" }
 htmx = { module = "org.webjars.npm:htmx.org", version.ref = "htmx" }
 
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }

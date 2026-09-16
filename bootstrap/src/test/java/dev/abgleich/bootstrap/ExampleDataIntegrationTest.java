@@ -81,7 +81,8 @@ class ExampleDataIntegrationTest {
                 .extracting(processed -> processed.imported().outcome())
                 .containsOnly(ImportResult.Outcome.ALREADY_IMPORTED);
         assertThat(count("bank_transaction")).isEqualTo(transactions);
-        assertThat(count("allocation")).isEqualTo((int) DATASET.count(Expected.R1_AUTO_CONFIRM));
+        assertThat(jdbc.queryForObject("select count(*) from allocation where status = 'CONFIRMED'", Integer.class))
+                .isEqualTo((int) DATASET.count(Expected.R1_AUTO_CONFIRM));
     }
 
     @Test

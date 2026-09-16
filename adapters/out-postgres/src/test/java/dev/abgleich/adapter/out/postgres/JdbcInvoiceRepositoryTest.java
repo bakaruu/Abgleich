@@ -36,7 +36,8 @@ class JdbcInvoiceRepositoryTest {
 
         repository.add(invoice);
 
-        assertThat(repository.findOpen(ACCOUNT, Money.CHF)).containsExactly(invoice);
+        assertThat(repository.findCandidates(ACCOUNT, Money.CHF, SCOR)).containsExactly(invoice);
+        assertThat(repository.findById(invoice.id())).contains(invoice);
     }
 
     @Test
@@ -57,9 +58,31 @@ class JdbcInvoiceRepositoryTest {
         jdbc.update("update invoice set status = 'PAID', paid_amount = amount where invoice_number = 'F-PAID'");
         jdbc.update("update invoice set status = 'CANCELLED' where invoice_number = 'F-CANCELLED'");
 
-        assertThat(repository.findOpen(ACCOUNT, Money.CHF)).extracting(i -> i.number().value())
+        assertThat(repository.findCandidates(ACCOUNT, Money.CHF, PaymentReference.none())).extracting(i -> i.number().value())
                 .containsExactly("F-1", "F-3");
-        assertThat(repository.findOpen(ACCOUNT, Money.EUR)).isEmpty();
+        assertThat(repository.findCandidates(ACCOUNT, Money.EUR, PaymentReference.none())).isEmpty();
+    }
+
+    @Test
+    void B31_closed_invoices_with_the_payment_reference_are_candidates_too() {
+        Invoice paid = invoice("F-2026-0142", "480.00", SCOR);
+        repository.add(paid);
+        repository.update(paid.withConfirmedPayment(Money.chf("480.00")));
+
+        assertThat(repository.findCandidates(ACCOUNT, Money.CHF, SCOR)).extracting(Invoice::status)
+                .containsExactly(dev.abgleich.domain.invoice.InvoiceStatus.PAID);
+        assertThat(repository.findCandidates(ACCOUNT, Money.CHF, PaymentReference.none())).isEmpty();
+    }
+
+    @Test
+    void B22_update_refuses_an_invoice_changed_since_it_was_read() {
+        Invoice invoice = invoice("F-2026-0142", "480.00", SCOR);
+        repository.add(invoice);
+        repository.update(invoice.cancel());
+
+        assertThat(catchThrowable(() -> repository.update(invoice.withConfirmedPayment(Money.chf("480.00")))))
+                .isInstanceOf(dev.abgleich.application.port.out.StaleDataException.class);
+        assertThat(repository.findById(invoice.id()).orElseThrow().version()).isEqualTo(1);
     }
 
     private static Invoice invoice(String number, String amount, PaymentReference reference) {

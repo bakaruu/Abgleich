@@ -10,6 +10,7 @@ include(
     "adapters:in-rest",
     "adapters:in-web",
     "adapters:out-camt",
+    "adapters:out-csv",
     "adapters:out-norma43",
     "adapters:out-postgres",
     "adapters:out-synthetic",

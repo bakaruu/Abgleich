@@ -56,9 +56,28 @@ final class Browser {
     }
 
     HttpResponse<String> postJson(String path, String json) {
-        return send(HttpRequest.newBuilder(URI.create(baseUrl + path))
+        return postJson(path, json, Map.of());
+    }
+
+    HttpResponse<String> postJson(String path, String json, Map<String, String> headers) {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(baseUrl + path))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json)));
+                .POST(HttpRequest.BodyPublishers.ofString(json));
+        headers.forEach(request::header);
+        return send(request);
+    }
+
+    /** A classic form post, URL-encoded like a browser sends it. Redirects are not followed. */
+    HttpResponse<String> postForm(String path, Map<String, String> fields, Map<String, String> headers) {
+        String body = fields.entrySet().stream()
+                .map(field -> java.net.URLEncoder.encode(field.getKey(), StandardCharsets.UTF_8) + "="
+                        + java.net.URLEncoder.encode(field.getValue(), StandardCharsets.UTF_8))
+                .collect(java.util.stream.Collectors.joining("&"));
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(baseUrl + path))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        headers.forEach(request::header);
+        return send(request);
     }
 
     /**

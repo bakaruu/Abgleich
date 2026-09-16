@@ -1,5 +1,6 @@
 package dev.abgleich.adapter.out.postgres;
 
+import dev.abgleich.application.port.in.EnrichedNotification;
 import dev.abgleich.application.port.in.ImportedStatement;
 import dev.abgleich.application.port.out.DuplicateImportException;
 import dev.abgleich.application.port.out.NewStatementImport;
@@ -9,6 +10,7 @@ import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.money.Money;
 import dev.abgleich.domain.statement.Balance;
 import dev.abgleich.domain.statement.DeduplicationKey;
+import dev.abgleich.domain.statement.Notification;
 import dev.abgleich.domain.statement.Statement;
 import dev.abgleich.domain.statement.StatementEntry;
 import dev.abgleich.domain.statement.TransactionDetail;
@@ -51,8 +53,8 @@ public final class JdbcStatementImportRepository implements StatementImportRepos
     private static final String INSERT_TRANSACTION = """
             insert into bank_transaction
                 (id, import_id, account_iban, dedup_key, booking_date, value_date, direction, amount, currency,
-                 reference, remittance_text, bank_reference, end_to_end_id, counterparty_name, reversal, status)
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNMATCHED')
+                 reference, remittance_text, bank_reference, end_to_end_id, counterparty_name, reversal, charges, status)
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNMATCHED')
             on conflict (account_iban, dedup_key) do nothing
             """;
 
@@ -101,6 +103,80 @@ public final class JdbcStatementImportRepository implements StatementImportRepos
         } catch (DataAccessException e) {
             throw new StorageException("Previous imports could not be read", e);
         }
+    }
+
+    /**
+     * Fills only empty columns and never creates rows (B12). An entry stored without details by the
+     * statement but notified with several transactions has no row per transaction to enrich: those
+     * transactions are counted as unknown.
+     */
+    @Override
+    public List<EnrichedNotification> enrich(List<Notification> notifications) {
+        try {
+            return transactions.execute(status -> notifications.stream().map(this::enrichOne).toList());
+        } catch (DataAccessException e) {
+            throw new StorageException("The notification could not be stored", e);
+        }
+    }
+
+    private EnrichedNotification enrichOne(Notification notification) {
+        int enriched = 0;
+        int complete = 0;
+        int unknown = 0;
+        List<DeduplicationKey> keys = notification.deduplicationKeys();
+        for (int i = 0; i < notification.entries().size(); i++) {
+            StatementEntry entry = notification.entries().get(i);
+            int count = entry.details().size();
+            for (int n = 1; n <= Math.max(count, 1); n++) {
+                DeduplicationKey key = count == 0 ? keys.get(i) : keys.get(i).forTransaction(n, count);
+                TransactionDetail detail = count == 0 ? null : entry.details().get(n - 1);
+                if (detail != null && fillEmptyColumns(notification, key, detail)) {
+                    enriched++;
+                } else if (exists(notification, key)) {
+                    complete++;
+                } else {
+                    unknown++;
+                }
+            }
+        }
+        return new EnrichedNotification(notification.account(), enriched, complete, unknown);
+    }
+
+    private boolean fillEmptyColumns(Notification notification, DeduplicationKey key, TransactionDetail detail) {
+        String reference = References.text(detail.reference());
+        String remittance = fit(detail.remittanceText(), 500);
+        String counterparty = fit(detail.counterpartyName(), 140);
+        String endToEnd = fit(detail.endToEndId(), 35);
+        java.math.BigDecimal charges = detail.charges() == null ? null : detail.charges().amount();
+        return client.sql("""
+                        update bank_transaction
+                           set reference = coalesce(reference, :reference),
+                               remittance_text = coalesce(remittance_text, :remittance),
+                               counterparty_name = coalesce(counterparty_name, :counterparty),
+                               end_to_end_id = coalesce(end_to_end_id, :endToEnd),
+                               charges = coalesce(charges, :charges)
+                         where account_iban = :account and dedup_key = :key
+                           and ((reference is null and cast(:reference as varchar) is not null)
+                             or (remittance_text is null and cast(:remittance as varchar) is not null)
+                             or (counterparty_name is null and cast(:counterparty as varchar) is not null)
+                             or (end_to_end_id is null and cast(:endToEnd as varchar) is not null)
+                             or (charges is null and cast(:charges as numeric) is not null))
+                        """)
+                .param("reference", reference)
+                .param("remittance", remittance)
+                .param("counterparty", counterparty)
+                .param("endToEnd", endToEnd)
+                .param("charges", charges)
+                .param("account", notification.account().value())
+                .param("key", key.value())
+                .update() == 1;
+    }
+
+    private boolean exists(Notification notification, DeduplicationKey key) {
+        return client.sql("select count(*) from bank_transaction where account_iban = ? and dedup_key = ?")
+                .params(notification.account().value(), key.value())
+                .query(Integer.class)
+                .single() > 0;
     }
 
     private ImportedStatement storeOne(NewStatementImport newImport) {
@@ -154,7 +230,8 @@ public final class JdbcStatementImportRepository implements StatementImportRepos
             fit(bankReference, 35),
             detail == null ? null : fit(detail.endToEndId(), 35),
             detail == null ? null : fit(detail.counterpartyName(), 140),
-            entry.reversal()
+            entry.reversal(),
+            detail == null || detail.charges() == null ? null : detail.charges().amount()
         };
     }
 

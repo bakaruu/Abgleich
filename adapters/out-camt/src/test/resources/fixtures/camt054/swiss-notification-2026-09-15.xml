@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic data only. Notifies entries of the camt.053 fixture with more remittance detail (B12). -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.054.001.08">
+  <BkToCstmrDbtCdtNtfctn>
+    <GrpHdr>
+      <MsgId>ABG-CH-20260915-N001</MsgId>
+      <CreDtTm>2026-09-15T18:00:00+02:00</CreDtTm>
+    </GrpHdr>
+    <Ntfctn>
+      <Id>ABG-CH-20260915-N001-STD</Id>
+      <CreDtTm>2026-09-15T18:00:00+02:00</CreDtTm>
+      <Acct>
+        <Id><IBAN>CH9300762011623852957</IBAN></Id>
+        <Ccy>CHF</Ccy>
+      </Acct>
+      <!-- Same bank reference as in the camt.053: enriches the stored payment, never duplicates it. -->
+      <Ntry>
+        <Amt Ccy="CHF">1200.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-15</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000203</AcctSvcrRef>
+        <BkTxCd><Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>AUTT</SubFmlyCd></Fmly></Domn></BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <Refs><EndToEndId>E2E-BRUNNER-0917</EndToEndId></Refs>
+            <Amt Ccy="CHF">1200.00</Amt>
+            <Chrgs><TtlChrgsAndTaxAmt Ccy="CHF">0.00</TtlChrgsAndTaxAmt></Chrgs>
+            <RltdPties><Dbtr><Pty><Nm>Brunner &amp; Co. AG</Nm></Pty></Dbtr></RltdPties>
+            <RmtInf><Ustrd>Teilzahlung Rechnung F-2026-0144</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <!-- Not in the statement yet: reported as unknown, nothing is stored. -->
+      <Ntry>
+        <Amt Ccy="CHF">5.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-15</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000299</AcctSvcrRef>
+        <BkTxCd><Domn><Cd>ACMT</Cd><Fmly><Cd>MDOP</Cd><SubFmlyCd>CHRG</SubFmlyCd></Fmly></Domn></BkTxCd>
+        <AddtlNtryInf>Porto</AddtlNtryInf>
+      </Ntry>
+    </Ntfctn>
+  </BkToCstmrDbtCdtNtfctn>
+</Document>

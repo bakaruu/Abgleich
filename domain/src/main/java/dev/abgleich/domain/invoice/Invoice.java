@@ -94,6 +94,28 @@ public record Invoice(
                 paidAmount.add(payment), false, version);
     }
 
+    /** Undoes a confirmed payment, for example when the bank reverses it (B10). */
+    public Invoice withReversedPayment(Money payment) {
+        Objects.requireNonNull(payment, "payment");
+        Money remaining = paidAmount.subtract(payment);
+        if (remaining.isNegative()) {
+            throw new InvalidInvoiceException("Invoice " + number + " cannot give back more than was paid");
+        }
+        return new Invoice(id, number, creditorAccount, debtorName, amount, reference, dueDate, remaining, cancelled,
+                version);
+    }
+
+    /** An invoice with payments cannot be cancelled: the money would silently lose its purpose (B31). */
+    public Invoice cancel() {
+        if (cancelled) {
+            return this;
+        }
+        if (!paidAmount.isZero()) {
+            throw new InvalidInvoiceException("Invoice " + number + " has payments; reverse them before cancelling");
+        }
+        return new Invoice(id, number, creditorAccount, debtorName, amount, reference, dueDate, paidAmount, true, version);
+    }
+
     private static void requireReferenceFitsAccount(PaymentReference reference, Iban account) {
         switch (reference) {
             case PaymentReference.Qrr qrr -> {

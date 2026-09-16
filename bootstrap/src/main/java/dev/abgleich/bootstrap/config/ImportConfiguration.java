@@ -1,6 +1,8 @@
 package dev.abgleich.bootstrap.config;
 
 import dev.abgleich.adapter.out.camt.Camt053Parser;
+import dev.abgleich.adapter.out.camt.Camt054Parser;
+import dev.abgleich.adapter.out.csv.CsvStatementParser;
 import dev.abgleich.adapter.out.norma43.Norma43Parser;
 import dev.abgleich.adapter.out.postgres.JdbcStatementImportRepository;
 import dev.abgleich.application.port.in.ImportStatementUseCase;
@@ -25,8 +27,18 @@ class ImportConfiguration {
     }
 
     @Bean
+    Camt054Parser camt054Parser() {
+        return new Camt054Parser();
+    }
+
+    @Bean
     Norma43Parser norma43Parser() {
         return new Norma43Parser();
+    }
+
+    @Bean
+    CsvStatementParser csvStatementParser() {
+        return new CsvStatementParser();
     }
 
     @Bean

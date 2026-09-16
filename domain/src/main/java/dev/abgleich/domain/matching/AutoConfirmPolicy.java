@@ -5,18 +5,19 @@ import java.util.List;
 
 /**
  * The only place that lets a match skip human review. A wrong automatic confirmation is worse than
- * no match at all (B27), so it takes rule R1 and exactly one candidate. Anything else, including a
- * tie between equally good invoices, goes to review instead of being settled at random (B28).
+ * no match at all (B27), so it takes rule R1, one invoice and no close competitor; the matcher sends
+ * ties to review before asking (B28).
  */
 public final class AutoConfirmPolicy {
 
     private AutoConfirmPolicy() {
     }
 
-    public static ReconciliationDecision decide(MatchRule rule, List<Allocation> proposals, Instant now) {
-        if (rule == MatchRule.R1 && proposals.size() == 1) {
-            return new ReconciliationDecision.AutoConfirmed(proposals.getFirst().confirmedBySystem(now));
+    /** @param proposal the allocations of one proposal group */
+    public static ReconciliationDecision decide(MatchRule rule, List<Allocation> proposal, Instant now) {
+        if (rule == MatchRule.R1 && proposal.size() == 1) {
+            return new ReconciliationDecision.AutoConfirmed(List.of(proposal.getFirst().confirm(Allocation.SYSTEM, now)));
         }
-        return new ReconciliationDecision.NeedsReview(proposals);
+        return new ReconciliationDecision.NeedsReview(proposal);
     }
 }

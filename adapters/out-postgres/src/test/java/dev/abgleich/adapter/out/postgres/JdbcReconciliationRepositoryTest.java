@@ -5,13 +5,14 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import dev.abgleich.application.port.in.ImportSource;
 import dev.abgleich.application.port.out.NewStatementImport;
+import dev.abgleich.application.port.out.ReconciliationRepositoryPort.ReversedPayment;
 import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.application.port.out.StatementFormat;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.matching.Allocation;
-import dev.abgleich.domain.matching.Confidence;
+import dev.abgleich.domain.matching.AllocationStatus;
 import dev.abgleich.domain.matching.MatchRule;
 import dev.abgleich.domain.matching.Matcher;
 import dev.abgleich.domain.matching.PaymentToMatch;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,34 +54,43 @@ class JdbcReconciliationRepositoryTest {
         invoice = Invoice.register(UUID.randomUUID(), InvoiceNumber.of("F-2026-0142"), ACCOUNT, "Keller GmbH",
                 Money.chf("480.00"), SCOR, LocalDate.of(2026, 9, 30));
         new JdbcInvoiceRepository(TestDatabase.dataSource()).add(invoice);
-        storeStatement();
+        storeStatement("a", List.of(
+                entry("480.00", Direction.CREDIT, SEP_15, "BNK-1", false,
+                        new TransactionDetail(null, SCOR, null, "Keller GmbH", "E2E-142", null, Money.chf("0.00"))),
+                entry("12.00", Direction.DEBIT, SEP_14, "BNK-2", false),
+                entry("99.00", Direction.CREDIT, SEP_14, "BNK-3", false,
+                        new TransactionDetail(null, null, "Danke", null, null, null))),
+                "567.00");
     }
 
     @Test
-    void B10_only_unmatched_credits_are_candidates_oldest_first() {
-        List<PaymentToMatch> payments = repository.findUnmatchedCredits(ACCOUNT);
+    void B10_only_unmatched_credits_are_candidates_oldest_first_with_every_hint() {
+        List<PaymentToMatch> payments = repository.findPendingCredits(ACCOUNT);
 
-        assertThat(payments).extracting(PaymentToMatch::amount)
-                .containsExactly(Money.chf("99.00"), Money.chf("480.00"));
-        assertThat(payments).extracting(PaymentToMatch::direction).containsOnly(Direction.CREDIT);
-        assertThat(payments.get(1).reference()).isEqualTo(SCOR);
-        assertThat(payments.get(1).version()).isZero();
+        assertThat(payments).extracting(PaymentToMatch::amount).containsExactly(Money.chf("99.00"), Money.chf("480.00"));
+        PaymentToMatch scor = payments.get(1);
+        assertThat(scor.reference()).isEqualTo(SCOR);
+        assertThat(scor.counterpartyName()).isEqualTo("Keller GmbH");
+        assertThat(scor.endToEndId()).isEqualTo("E2E-142");
+        assertThat(scor.charges()).isEqualTo(Money.chf("0.00"));
+        assertThat(payments.getFirst().remittanceText()).isEqualTo("Danke");
     }
 
     @Test
     void confirmed_match_updates_payment_invoice_and_allocation_together() {
         PaymentToMatch payment = scorPayment();
-        Allocation allocation = confirmed(payment);
+        List<Allocation> confirmed = autoConfirmed(payment);
 
-        repository.recordConfirmed(payment, allocation, invoice.withConfirmedPayment(payment.amount()));
+        repository.recordConfirmed(payment, confirmed, List.of(invoice.withConfirmedPayment(payment.amount())));
 
         assertThat(row("select status, version from bank_transaction where id = ?", payment.transactionId()))
                 .containsEntry("status", "MATCHED").containsEntry("version", 1L);
-        assertThat(row("select status, paid_amount, version from invoice where id = ?", invoice.id()))
+        assertThat(row("select status, version from invoice where id = ?", invoice.id()))
                 .containsEntry("status", "PAID").containsEntry("version", 1L);
-        assertThat(row("select rule, confidence, status, decided_by from allocation where id = ?", allocation.id()))
-                .containsEntry("rule", "R1").containsEntry("status", "CONFIRMED").containsEntry("decided_by", "system");
-        assertThat(repository.findUnmatchedCredit(payment.transactionId())).isEmpty();
+        assertThat(row("select rule, status, decided_by, group_id from allocation where id = ?", confirmed.getFirst().id()))
+                .containsEntry("rule", "R1").containsEntry("status", "CONFIRMED").containsEntry("decided_by", "system")
+                .containsEntry("group_id", confirmed.getFirst().groupId());
+        assertThat(repository.findPendingCredit(payment.transactionId())).isEmpty();
     }
 
     @Test
@@ -87,8 +98,8 @@ class JdbcReconciliationRepositoryTest {
         PaymentToMatch payment = scorPayment();
         jdbc.update("update bank_transaction set version = version + 1 where id = ?", payment.transactionId());
 
-        Throwable refused = catchThrowable(() ->
-                repository.recordConfirmed(payment, confirmed(payment), invoice.withConfirmedPayment(payment.amount())));
+        Throwable refused = catchThrowable(() -> repository.recordConfirmed(payment, autoConfirmed(payment),
+                List.of(invoice.withConfirmedPayment(payment.amount()))));
 
         assertThat(refused).isInstanceOf(StaleDataException.class);
         assertThat(row("select status, version from invoice where id = ?", invoice.id()))
@@ -101,8 +112,8 @@ class JdbcReconciliationRepositoryTest {
         PaymentToMatch payment = scorPayment();
         jdbc.update("update invoice set paid_amount = 480, status = 'PAID', version = 1 where id = ?", invoice.id());
 
-        Throwable refused = catchThrowable(() ->
-                repository.recordConfirmed(payment, confirmed(payment), invoice.withConfirmedPayment(payment.amount())));
+        Throwable refused = catchThrowable(() -> repository.recordConfirmed(payment, autoConfirmed(payment),
+                List.of(invoice.withConfirmedPayment(payment.amount()))));
 
         assertThat(refused).isInstanceOf(StaleDataException.class).hasMessageContaining("F-2026-0142");
         assertThat(row("select status, version from bank_transaction where id = ?", payment.transactionId()))
@@ -113,44 +124,105 @@ class JdbcReconciliationRepositoryTest {
     @Test
     void B33_second_active_allocation_for_the_same_pair_is_refused() {
         PaymentToMatch payment = scorPayment();
-        Allocation proposal = proposal(payment);
         jdbc.update("""
-                insert into allocation (id, transaction_id, invoice_id, amount, rule, confidence, explanation,
+                insert into allocation (id, transaction_id, invoice_id, group_id, amount, rule, confidence, explanation,
                                         status, created_at)
-                values (?, ?, ?, 480.00, 'R4', 0.80, 'Earlier proposal', 'PROPOSED', now())
+                values (?, ?, ?, gen_random_uuid(), 480.00, 'R4', 0.80, 'Earlier proposal', 'PROPOSED', now())
                 """, UUID.randomUUID(), payment.transactionId(), invoice.id());
 
-        assertThat(catchThrowable(() -> repository.recordProposals(payment, List.of(proposal))))
+        assertThat(catchThrowable(() -> repository.recordProposals(payment, List.of(proposal(payment, invoice.id())))))
                 .isInstanceOf(StaleDataException.class);
         assertThat(row("select status from bank_transaction where id = ?", payment.transactionId()))
                 .containsEntry("status", "UNMATCHED");
     }
 
     @Test
-    void proposals_mark_the_payment_for_review() {
+    void B07_proposals_keep_group_and_charges_written_off() {
         PaymentToMatch payment = scorPayment();
+        UUID group = UUID.randomUUID();
+        Allocation withCharges = Allocation.propose(payment.transactionId(), invoice.id(), group, Money.chf("472.50"),
+                Money.chf("7.50"), MatchRule.R2, "Short by charges", NOW);
 
-        repository.recordProposals(payment, List.of(proposal(payment)));
+        repository.recordProposals(payment, List.of(withCharges));
 
         assertThat(row("select status from bank_transaction where id = ?", payment.transactionId()))
                 .containsEntry("status", "PROPOSED");
-        assertThat(row("select status, decided_by from allocation where transaction_id = ?", payment.transactionId()))
-                .containsEntry("status", "PROPOSED").containsEntry("decided_by", null);
+        assertThat(row("select charges_written_off, decided_by, group_id from allocation where transaction_id = ?",
+                payment.transactionId()))
+                .containsEntry("decided_by", null).containsEntry("group_id", group)
+                .extractingByKey("charges_written_off").isEqualTo(new java.math.BigDecimal("7.50"));
+    }
+
+    @Test
+    void rejected_invoice_sets_are_grouped() {
+        PaymentToMatch payment = scorPayment();
+        UUID otherInvoice = UUID.randomUUID();
+        jdbc.update("""
+                insert into invoice (id, invoice_number, creditor_iban, debtor_name, amount, currency, due_date, status)
+                values (?, 'F-2026-0143', ?, 'Keller GmbH', 100, 'CHF', date '2026-09-30', 'OPEN')
+                """, otherInvoice, ACCOUNT.value());
+        UUID group = UUID.randomUUID();
+        for (UUID invoiceId : List.of(invoice.id(), otherInvoice)) {
+            jdbc.update("""
+                    insert into allocation (id, transaction_id, invoice_id, group_id, amount, rule, confidence, explanation,
+                                            status, decided_by, decided_at, decision_note, created_at)
+                    values (?, ?, ?, ?, 240.00, 'R6', 0.75, 'Two invoices', 'REJECTED', 'reviewer', now(), 'No', now())
+                    """, UUID.randomUUID(), payment.transactionId(), invoiceId, group);
+        }
+
+        assertThat(repository.rejectedInvoiceSets(payment.transactionId()))
+                .containsExactly(Set.of(invoice.id(), otherInvoice));
+    }
+
+    @Test
+    void B10_reversal_finds_the_single_matched_credit_and_undoes_it_atomically() {
+        PaymentToMatch payment = scorPayment();
+        List<Allocation> confirmed = autoConfirmed(payment);
+        repository.recordConfirmed(payment, confirmed, List.of(invoice.withConfirmedPayment(payment.amount())));
+        storeStatement("b", List.of(entry("480.00", Direction.DEBIT, LocalDate.of(2026, 9, 17), "BNK-9", true,
+                new TransactionDetail(null, SCOR, null, null, "E2E-142", null))), "-480.00");
+
+        PaymentToMatch reversal = repository.findPendingReversals(ACCOUNT).getFirst();
+        ReversedPayment original = repository.findReversedCredit(reversal).orElseThrow();
+
+        assertThat(original.transactionId()).isEqualTo(payment.transactionId());
+        assertThat(original.allocations()).extracting(Allocation::id).containsExactly(confirmed.getFirst().id());
+        Invoice paid = original.invoices().getFirst();
+        repository.recordReversal(reversal, original,
+                List.of(original.allocations().getFirst().reverse("system", NOW, "Reversed by the bank")),
+                List.of(paid.withReversedPayment(Money.chf("480.00"))));
+
+        assertThat(row("select status from bank_transaction where id = ?", payment.transactionId()))
+                .containsEntry("status", "REVERSED");
+        assertThat(row("select status, decision_note from allocation where id = ?", confirmed.getFirst().id()))
+                .containsEntry("status", "REVERSED").containsEntry("decision_note", "Reversed by the bank");
+        assertThat(row("select status, paid_amount from invoice where id = ?", invoice.id()))
+                .containsEntry("status", "OPEN");
+        assertThat(repository.findPendingReversals(ACCOUNT)).isEmpty();
+    }
+
+    @Test
+    void B10_reversal_without_a_unique_original_is_left_alone() {
+        storeStatement("c", List.of(entry("480.00", Direction.DEBIT, SEP_15, "BNK-8", true,
+                new TransactionDetail(null, SCOR, null, null, null, null))), "-480.00");
+
+        PaymentToMatch reversal = repository.findPendingReversals(ACCOUNT).getFirst();
+
+        assertThat(repository.findReversedCredit(reversal)).as("the SCOR credit is not matched yet").isEmpty();
     }
 
     private PaymentToMatch scorPayment() {
-        return repository.findUnmatchedCredits(ACCOUNT).stream()
+        return repository.findPendingCredits(ACCOUNT).stream()
                 .filter(p -> p.reference().equals(SCOR)).findFirst().orElseThrow();
     }
 
-    private Allocation confirmed(PaymentToMatch payment) {
-        ReconciliationDecision decision = new Matcher().decide(payment, List.of(invoice), NOW);
-        return ((ReconciliationDecision.AutoConfirmed) decision).allocation();
+    private List<Allocation> autoConfirmed(PaymentToMatch payment) {
+        return ((ReconciliationDecision.AutoConfirmed) new Matcher().decide(payment, List.of(invoice), NOW)).allocations();
     }
 
-    private Allocation proposal(PaymentToMatch payment) {
-        return Allocation.propose(payment.transactionId(), invoice.id(), payment.amount(), MatchRule.R1,
-                Confidence.CERTAIN, "Creditor reference and amount match", NOW);
+    private static Allocation proposal(PaymentToMatch payment, UUID invoiceId) {
+        return Allocation.propose(payment.transactionId(), invoiceId, UUID.randomUUID(), payment.amount(), null,
+                MatchRule.R1, "Creditor reference and amount match", NOW);
     }
 
     private Map<String, Object> row(String sql, UUID id) {
@@ -161,18 +233,16 @@ class JdbcReconciliationRepositoryTest {
         return jdbc.queryForObject("select count(*) from " + table, Integer.class);
     }
 
-    /** A SCOR payment booked on the 15th, an older credit without reference and a fee. */
-    private static void storeStatement() {
-        TransactionDetail scor = new TransactionDetail(null, SCOR, null, "Keller GmbH", null, null);
-        TransactionDetail noReference = new TransactionDetail(null, null, "Danke", null, null, null);
-        Statement statement = new Statement(ACCOUNT, "STMT-1",
-                new Balance(Money.chf("0.00"), SEP_14), new Balance(Money.chf("567.00"), SEP_15),
-                List.of(
-                        new StatementEntry(Money.chf("480.00"), Direction.CREDIT, SEP_15, null, "BNK-1", false, List.of(scor)),
-                        new StatementEntry(Money.chf("12.00"), Direction.DEBIT, SEP_14, null, "BNK-2", false, List.of()),
-                        new StatementEntry(Money.chf("99.00"), Direction.CREDIT, SEP_14, null, "BNK-3", false, List.of(noReference))));
+    private static StatementEntry entry(String amount, Direction direction, LocalDate booked, String bankReference,
+            boolean reversal, TransactionDetail... details) {
+        return new StatementEntry(Money.chf(amount), direction, booked, null, bankReference, reversal, List.of(details));
+    }
+
+    private static void storeStatement(String seed, List<StatementEntry> entries, String closing) {
+        Statement statement = new Statement(ACCOUNT, "STMT-" + seed,
+                new Balance(Money.chf("0.00"), SEP_14), new Balance(Money.chf(closing), SEP_15), entries);
         new JdbcStatementImportRepository(TestDatabase.dataSource(), TestDatabase.transactions())
                 .store(List.of(new NewStatementImport(UUID.randomUUID(), ImportSource.REST, StatementFormat.CAMT053_V04,
-                        "a".repeat(64), "MSG-1", statement, NOW)));
+                        seed.repeat(64), "MSG-" + seed, statement, NOW)));
     }
 }

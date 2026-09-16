@@ -109,6 +109,25 @@ class RestApiTest {
     }
 
     @Test
+    void B12_camt054_enriches_not_duplicates() {
+        byte[] statement = fixture("camt053/swiss-day-2026-09-15.xml");
+        byte[] notification = fixture("camt054/swiss-notification-2026-09-15.xml");
+        api.upload("/api/v1/statements", statement, Map.of(), Map.of());
+        int transactions = jdbc.queryForObject("select count(*) from bank_transaction", Integer.class);
+
+        HttpResponse<String> enriched = api.upload("/api/v1/statements", notification, Map.of(), Map.of());
+
+        assertThat(enriched.statusCode()).isEqualTo(200);
+        assertThat(enriched.body())
+                .contains("\"outcome\":\"ENRICHED\"")
+                .contains("\"format\":\"CAMT054_V08\"")
+                .contains("\"enriched\":1").contains("\"unknown\":1");
+        assertThat(jdbc.queryForObject("select count(*) from bank_transaction", Integer.class)).isEqualTo(transactions);
+        assertThat(jdbc.queryForObject("select remittance_text from bank_transaction where dedup_key = 'BANK:BNK20260915000203'",
+                String.class)).isEqualTo("Teilzahlung Rechnung F-2026-0144");
+    }
+
+    @Test
     void unknown_report_is_not_found() {
         assertThat(api.get("/api/v1/statements/" + UUID.randomUUID()).statusCode()).isEqualTo(404);
     }

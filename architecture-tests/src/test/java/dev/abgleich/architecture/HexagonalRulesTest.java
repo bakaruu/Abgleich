@@ -31,15 +31,18 @@ class HexagonalRulesTest {
                 "dev.abgleich.domain.statement",
                 "dev.abgleich.domain.invoice",
                 "dev.abgleich.domain.matching",
+                "dev.abgleich.domain.matching.text",
                 "dev.abgleich.application.port.in",
                 "dev.abgleich.application.port.out",
                 "dev.abgleich.application.service",
                 "dev.abgleich.adapter.in.rest",
                 "dev.abgleich.adapter.in.web",
                 "dev.abgleich.adapter.out.camt",
+                "dev.abgleich.adapter.out.csv",
                 "dev.abgleich.adapter.out.norma43",
                 "dev.abgleich.adapter.out.postgres",
                 "dev.abgleich.adapter.out.synthetic",
+                "dev.abgleich.adapter.out.synthetic.evaluation",
                 "dev.abgleich.bootstrap"))
                 .allSatisfy(pkg -> assertThat(ALL.stream().anyMatch(c -> c.getPackageName().equals(pkg)))
                         .as("production classes in %s", pkg)

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!--/* Bank files are untrusted input: text is always escaped with th:text (B32). */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title='Invoices')}"></head>
+<body>
+<header th:replace="~{layout :: topbar(active='invoices')}"></header>
+
+<main class="page">
+    <section class="intro">
+        <h1>Invoices</h1>
+        <p>An invoice's status follows from the payments confirmed for it. Registering an invoice reconciles the
+            payments still waiting on its account.</p>
+    </section>
+
+    <div th:if="${error != null}" class="alert alert-error" role="alert" th:text="${error}">Invalid invoice.</div>
+
+    <nav class="filters" aria-label="Filter by status">
+        <a th:href="@{/invoices}" th:classappend="${selected == null} ? 'active'">All</a>
+        <a th:each="status : ${statuses}" th:href="@{/invoices(status=${status})}"
+           th:classappend="${selected == status} ? 'active'" th:text="${status}">OPEN</a>
+    </nav>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th scope="col">Invoice</th>
+                <th scope="col">Debtor</th>
+                <th scope="col" class="right">Amount</th>
+                <th scope="col" class="right">Outstanding</th>
+                <th scope="col">Due</th>
+                <th scope="col">Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${invoices.isEmpty()}">
+                <td colspan="6" class="muted">No invoices.</td>
+            </tr>
+            <tr th:each="invoice : ${invoices}">
+                <td><a class="mono" th:href="@{/invoices/{id}(id=${invoice.id()})}" th:text="${invoice.number()}">F-2026-0142</a>
+                    <small class="muted mono" th:text="${invoice.reference()}">RF18539007547034</small></td>
+                <td th:text="${invoice.debtorName()}">Alpenblick Hotel SA</td>
+                <td class="right nowrap num" th:text="${invoice.amount()}">CHF 480.00</td>
+                <td class="right nowrap num" th:text="${invoice.outstanding()}">CHF 0.00</td>
+                <td class="nowrap" th:text="${invoice.dueDate()}">2026-09-30</td>
+                <td><span class="status" th:classappend="|status-${#strings.toLowerCase(invoice.status())}|"
+                          th:text="${invoice.status()}">PAID</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <section class="register" aria-labelledby="register-title">
+        <h2 id="register-title">Register an invoice</h2>
+        <form class="invoice-form" th:action="@{/invoices}" method="post" th:object="${form}">
+            <label>Invoice number <input name="invoiceNumber" th:value="*{invoiceNumber()}" required maxlength="35"></label>
+            <label>Creditor IBAN <input name="creditorIban" th:value="*{creditorIban()}" required maxlength="42"
+                                        placeholder="CH93 0076 2011 6238 5295 7"></label>
+            <label>Debtor name <input name="debtorName" th:value="*{debtorName()}" required maxlength="140"></label>
+            <label>Amount <input name="amount" th:value="*{amount()}" required inputmode="decimal" placeholder="480.00"></label>
+            <label>Currency
+                <select name="currency">
+                    <option value="CHF" th:selected="*{currency() == 'CHF'}">CHF</option>
+                    <option value="EUR" th:selected="*{currency() == 'EUR'}">EUR</option>
+                </select>
+            </label>
+            <label>QR or creditor reference <input name="reference" th:value="*{reference()}" maxlength="42"
+                                                   placeholder="optional"></label>
+            <label>Due date <input name="dueDate" type="date" th:value="*{dueDate()}" required></label>
+            <div class="actions">
+                <button type="submit">Register invoice</button>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

@@ -151,6 +151,34 @@ class JdbcStatementImportRepositoryTest {
     }
 
     @Test
+    void B12_notification_fills_empty_details_and_never_creates_transactions() {
+        repository.store(List.of(swissImport("a")));
+        TransactionDetail notified = new TransactionDetail(null, null, "Hotelrechnung September",
+                "Other name ignored", "E2E-77", null, Money.chf("0.00"));
+        dev.abgleich.domain.statement.Notification notification = new dev.abgleich.domain.statement.Notification(SWISS,
+                "N-1", List.of(
+                        new StatementEntry(Money.chf("1250.00"), Direction.CREDIT, SEP_15, null, "BNK-1", false,
+                                List.of(notified)),
+                        new StatementEntry(Money.chf("5.00"), Direction.DEBIT, SEP_15, null, "BNK-UNKNOWN", false,
+                                List.of())));
+
+        List<dev.abgleich.application.port.in.EnrichedNotification> result = repository.enrich(List.of(notification));
+        List<dev.abgleich.application.port.in.EnrichedNotification> again = repository.enrich(List.of(notification));
+
+        assertThat(result).singleElement().satisfies(enriched -> {
+            assertThat(enriched.enriched()).isEqualTo(1);
+            assertThat(enriched.unknown()).isEqualTo(1);
+        });
+        assertThat(again.getFirst().enriched()).as("nothing left to add").isZero();
+        assertThat(again.getFirst().alreadyComplete()).isEqualTo(1);
+        assertThat(count("bank_transaction")).isEqualTo(5);
+        assertThat(jdbc.queryForMap("select remittance_text, counterparty_name, end_to_end_id, charges from bank_transaction where dedup_key = 'BANK:BNK-1'"))
+                .containsEntry("remittance_text", "Hotelrechnung September")
+                .as("filled fields are never overwritten").containsEntry("counterparty_name", "Muster Handwerk GmbH")
+                .containsEntry("end_to_end_id", "E2E-77");
+    }
+
+    @Test
     void B39_database_errors_never_reach_the_core_as_spring_exceptions() {
         repository.store(List.of(swissImport("a")));
 

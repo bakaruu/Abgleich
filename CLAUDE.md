@@ -34,8 +34,15 @@ F1 import end-to-end — done (16 Sep 2026, planned for 13 Oct):
    16 invoices, every payment labelled with its expected outcome), "Load example" and example downloads.
    `bootstrap` tests read fixtures from the parser modules (no copies).
 
-Next: F2 matching and review (rules R2–R6, partial/over-payments, reversals, review queue and invoices
-screens, camt.054 + camt.053 v08 + CSV, labelled dataset and `evaluateMatching`). Read the plan first.
+F2 matching and review — done (16 Sep 2026, planned for 3 Nov): rules R2–R6 in `MatchingRules` with
+`MatchingPolicy` thresholds and word-wise name similarity (ADR 0006); proposal groups, review with payment
+version (B33, B34), reversals (B10), rematch on invoice registration (B30); camt.053 v08, camt.054 enrichment
+(ADR 0007), `adapters/out-csv`; V4 migration; review and invoice screens and API (`If-Match`, 412);
+300-case labelled dataset with `./gradlew evaluateMatching`; golden file `GoldenFileTest` (update with
+`-Pgolden.update=true`, review the diff).
+
+Next: F3 integrations (outbox + Kafka out B23, Kafka invoice consumer B24, SFTP watcher B25, mock bank +
+scheduler with ShedLock, equivalence test Web = REST = SFTP = API). Read the plan first.
 
 Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 2026.
 
@@ -43,13 +50,15 @@ Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 
 
 Java 21 (toolchain), Spring Boot 4.1.1, Gradle 9.7.1 (wrapper, Kotlin DSL, version catalog in
 `gradle/libs.versions.toml`, conventions in `build-logic`), PostgreSQL 17, Flyway, Testcontainers,
-JUnit 5, AssertJ, jqwik, ArchUnit. Planned: Thymeleaf + htmx UI, Kafka, SFTP.
+JUnit 5, AssertJ, jqwik, ArchUnit, Spring JDBC, Thymeleaf + htmx 2, Spring Security, Apache Commons CSV.
+Planned: Kafka, SFTP.
 
 ## Commands
 
 ```bash
 ./gradlew build                       # everything, needs Docker running
 ./gradlew :domain:test                # fast, no Docker
+./gradlew evaluateMatching            # precision per rule over 300 labelled payments
 docker compose up -d                  # local PostgreSQL
 ./gradlew :bootstrap:bootRun
 ```

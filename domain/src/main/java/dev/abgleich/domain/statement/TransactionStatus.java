@@ -6,5 +6,7 @@ public enum TransactionStatus {
     PROPOSED,
     MATCHED,
     PARTIALLY_ALLOCATED,
-    IGNORED
+    IGNORED,
+    /** A matched credit the bank later reversed; its allocations are reversed too (B10). */
+    REVERSED
 }

@@ -1,5 +1,6 @@
 package dev.abgleich.adapter.in.web;
 
+import dev.abgleich.application.port.in.EnrichedNotification;
 import dev.abgleich.application.port.in.ImportResult;
 import dev.abgleich.application.port.in.ImportedStatement;
 import dev.abgleich.application.port.in.ReconciliationRun;
@@ -12,7 +13,12 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /** What the result fragment shows. Labels are decided here so the template stays free of logic. */
-public record UploadView(String title, boolean alreadyImported, String format, List<AccountView> accounts) {
+public record UploadView(
+        String title,
+        ImportResult.Outcome outcome,
+        String format,
+        List<AccountView> accounts,
+        List<EnrichedNotification> enriched) {
 
     /** @param title the file name when it is known, or {@code null} */
     static UploadView of(StatementProcessed processed, StatementReportQuery reports, String title) {
@@ -27,9 +33,33 @@ public record UploadView(String title, boolean alreadyImported, String format, L
                 .toList();
         String format = switch (imported.format()) {
             case CAMT053_V04 -> "camt.053 (ISO 20022, version 001.04)";
+            case CAMT053_V08 -> "camt.053 (ISO 20022, version 001.08)";
+            case CAMT054_V04 -> "camt.054 notification (ISO 20022, version 001.04)";
+            case CAMT054_V08 -> "camt.054 notification (ISO 20022, version 001.08)";
             case NORMA43 -> "Norma 43 (AEB)";
+            case CSV -> "Abgleich CSV";
         };
-        return new UploadView(title, imported.outcome() == ImportResult.Outcome.ALREADY_IMPORTED, format, accounts);
+        return new UploadView(title, imported.outcome(), format, accounts, imported.enriched());
+    }
+
+    public String outcomeLabel() {
+        return switch (outcome) {
+            case IMPORTED -> "Imported.";
+            case ALREADY_IMPORTED -> "Already imported.";
+            case ENRICHED -> "Notification read.";
+        };
+    }
+
+    public String outcomeText() {
+        return switch (outcome) {
+            case IMPORTED -> "Balances were validated and every payment was stored once.";
+            case ALREADY_IMPORTED -> "This file was imported before; nothing was stored twice.";
+            case ENRICHED -> "Its details were added to payments already stored; no payment was created.";
+        };
+    }
+
+    public String outcomeClass() {
+        return outcome == ImportResult.Outcome.ALREADY_IMPORTED ? "alert-known" : "alert-ok";
     }
 
     public record AccountView(ImportedStatement statement, ReconciliationRun run, List<LineView> lines) {
@@ -52,6 +82,7 @@ public record UploadView(String title, boolean alreadyImported, String format, L
                 case UNMATCHED -> "Unmatched";
                 case PARTIALLY_ALLOCATED -> "Partially allocated";
                 case IGNORED -> "Ignored";
+                case REVERSED -> "Reversed";
             };
         }
 

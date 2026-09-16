@@ -210,3 +210,43 @@ td small { display: block; }
 @media (prefers-reduced-motion: reduce) {
     .progress { transition: none; }
 }
+
+/* Phase F2: review queue and invoices */
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+nav a.active { text-decoration: underline; text-underline-offset: 6px; }
+nav .count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 99px; font-size: 12px; line-height: 20px; text-align: center; color: var(--on-accent); background: var(--accent); }
+.empty { color: var(--muted); padding: 24px 0; }
+.section-title { font-size: 18px; margin: 28px 0 12px; }
+
+.review-item { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+.review-item.decided { padding: 12px 16px; }
+.review-item.decided .alert { margin: 0; }
+.review-payment { display: flex; flex-wrap: wrap; gap: 8px 32px; padding: 14px 18px; background: var(--surface-2); }
+.review-payment .amount { font-size: 20px; font-weight: 700; }
+.payment-text { min-width: 0; overflow-wrap: anywhere; }
+.payment-text small { display: block; }
+.proposal { display: grid; grid-template-columns: 110px 1fr; gap: 8px 16px; padding: 14px 18px; border-top: 1px solid var(--rule); }
+.proposal-rule small { display: block; }
+.rule { display: inline-block; font-weight: 700; font-family: ui-monospace, Consolas, monospace; padding: 1px 8px; border-radius: 4px; color: var(--on-accent); background: var(--accent); }
+.explanation { margin: 0 0 6px; overflow-wrap: anywhere; }
+.shares { list-style: none; padding: 0; margin: 0 0 10px; font-size: 14.5px; }
+.shares li { overflow-wrap: anywhere; }
+.decision-actions { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.decision-actions form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.decision-actions input[type="text"] { font: inherit; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 0; width: 220px; max-width: 100%; }
+@media (max-width: 560px) { .proposal { grid-template-columns: 1fr; } }
+
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
+.filters a { font-size: 13px; font-weight: 600; text-decoration: none; padding: 4px 11px; border: 1px solid var(--rule); border-radius: 99px; color: var(--muted); }
+.filters a.active { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+
+.status-open, .status-partially_paid { color: var(--warn); background: var(--warn-bg); }
+.status-paid, .status-confirmed { color: var(--ok); background: var(--ok-bg); }
+.status-overpaid, .status-cancelled, .status-rejected, .status-reversed { color: var(--error); background: var(--error-bg); }
+.status-proposed { color: var(--warn); background: var(--warn-bg); }
+
+.register { margin-top: 32px; }
+.invoice-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; margin-top: 12px; }
+.invoice-form label { display: grid; gap: 4px; font-size: 14px; font-weight: 600; }
+.invoice-form input, .invoice-form select { font: inherit; font-weight: 400; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 0; }
+.invoice-form .actions { align-self: end; }

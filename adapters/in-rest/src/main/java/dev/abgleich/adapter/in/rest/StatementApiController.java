@@ -40,10 +40,19 @@ class StatementApiController {
         StatementProcessed processed = processStatement.process(
                 new ImportStatementCommand(ImportSource.REST, file::getInputStream));
         ImportResult imported = processed.imported();
+        int statements = imported.statements().size();
         UploadResponse body = new UploadResponse(imported.outcome().name(), imported.format().name(),
-                IntStream.range(0, imported.statements().size())
+                IntStream.range(0, statements)
                         .mapToObj(i -> ImportedStatementJson.of(imported.statements().get(i),
                                 processed.reconciliations().get(i)))
+                        .toList(),
+                IntStream.range(0, imported.enriched().size())
+                        .mapToObj(i -> {
+                            var notified = imported.enriched().get(i);
+                            return new ApiJson.EnrichedJson(notified.account().value(), notified.enriched(),
+                                    notified.alreadyComplete(), notified.unknown(),
+                                    processed.reconciliations().get(statements + i));
+                        })
                         .toList());
         HttpStatus status = imported.outcome() == ImportResult.Outcome.IMPORTED ? HttpStatus.CREATED : HttpStatus.OK;
         return ResponseEntity.status(status).body(body);

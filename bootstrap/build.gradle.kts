@@ -9,6 +9,7 @@ dependencies {
     implementation(project(":adapters:in-rest"))
     implementation(project(":adapters:in-web"))
     implementation(project(":adapters:out-camt"))
+    implementation(project(":adapters:out-csv"))
     implementation(project(":adapters:out-norma43"))
     implementation(project(":adapters:out-postgres"))
     implementation(project(":adapters:out-synthetic"))
@@ -32,4 +33,9 @@ dependencies {
 sourceSets.test {
     resources.srcDir(project(":adapters:out-camt").file("src/test/resources"))
     resources.srcDir(project(":adapters:out-norma43").file("src/test/resources"))
+}
+
+// -Pgolden.update=true rewrites the golden files instead of comparing against them.
+tasks.test {
+    systemProperty("golden.update", providers.gradleProperty("golden.update").getOrElse("false"))
 }

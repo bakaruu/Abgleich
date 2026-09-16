@@ -12,6 +12,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 /**
@@ -44,6 +45,28 @@ class ApiExceptionHandler {
     @ExceptionHandler
     ProblemDetail duplicateInvoice(DuplicateInvoiceException e) {
         return problem(HttpStatus.CONFLICT, "duplicate-invoice", "Invoice already exists", e.getMessage());
+    }
+
+    /** B34: a stale decision is 412 Precondition Failed, the standard answer to an outdated If-Match. */
+    @ExceptionHandler
+    ProblemDetail decisionRefused(DecisionRefusedException e) {
+        return switch (e.result().outcome()) {
+            case STALE -> problem(HttpStatus.PRECONDITION_FAILED, "stale-decision", "Changed by someone else", e.getMessage());
+            case NOT_FOUND -> problem(HttpStatus.NOT_FOUND, "not-found", "Not found", e.getMessage());
+            case REFUSED -> problem(HttpStatus.UNPROCESSABLE_CONTENT, "decision-refused", "Decision refused", e.getMessage());
+            case DONE, ALREADY_DONE -> throw new IllegalStateException("A stored decision is not an error");
+        };
+    }
+
+    @ExceptionHandler
+    ProblemDetail preconditionRequired(ETags.PreconditionRequiredException e) {
+        return problem(HttpStatus.PRECONDITION_REQUIRED, "version-required", "Version required", e.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail invalidParameter(MethodArgumentTypeMismatchException e) {
+        return problem(HttpStatus.BAD_REQUEST, "invalid-input", "Invalid input",
+                "Parameter '" + e.getName() + "' has an invalid value");
     }
 
     @ExceptionHandler

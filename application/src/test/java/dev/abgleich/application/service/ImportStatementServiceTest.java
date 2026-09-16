@@ -177,5 +177,11 @@ class ImportStatementServiceTest {
             previousLookedUpWithAccounts = accounts;
             return previous;
         }
+
+        @Override
+        public List<dev.abgleich.application.port.in.EnrichedNotification> enrich(
+                List<dev.abgleich.domain.statement.Notification> notifications) {
+            return List.of();
+        }
     }
 }

@@ -15,11 +15,11 @@ import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -38,11 +38,13 @@ public abstract class StatementParserContract {
 
     /** Start of a file in each known format, to check that a parser only claims its own. */
     private static final Map<String, byte[]> FORMAT_SAMPLES = Map.of(
-            "CAMT053_V04", ascii("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "CAMT053", ascii("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     + "<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.053.001.04\">"),
+            "CAMT054", ascii("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    + "<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.054.001.08\">"),
             "NORMA43", ascii("11210004180200051332260915260915200000000500000978"
                     + "3TALLER DEMO ABGLEICH SL      "),
-            "CSV", ascii("booking_date;value_date;amount;currency;reference\n2026-09-15;2026-09-15;1250.00;CHF;F-141\n"),
+            "CSV", ascii("#abgleich-csv;version=1;account=CH9300762011623852957;currency=CHF\n"),
             "PDF", ascii("%PDF-1.7\n%âãÏÓ\n"),
             "EMPTY", new byte[0]);
 
@@ -56,31 +58,47 @@ public abstract class StatementParserContract {
      */
     protected abstract byte[] validFile();
 
-    /** {@link #validFile()} with the closing balance of its first statement one cent higher. */
+    /**
+     * {@link #validFile()} with the closing balance of its first statement one cent higher, or {@code null}
+     * for a format without balances.
+     */
     protected abstract byte[] validFileWithClosingBalanceOneCentHigher();
+
+    /** Formats without balances (camt.054) only enrich transactions and skip the balance checks. */
+    protected boolean hasBalances() {
+        return true;
+    }
+
+    private static List<StatementEntry> entries(ParsedStatementFile file) {
+        return java.util.stream.Stream.concat(
+                file.statements().stream().flatMap(statement -> statement.entries().stream()),
+                file.notifications().stream().flatMap(notification -> notification.entries().stream())).toList();
+    }
+
+    private static List<List<DeduplicationKey>> keys(ParsedStatementFile file) {
+        return java.util.stream.Stream.concat(file.statements().stream().map(Statement::deduplicationKeys),
+                file.notifications().stream().map(dev.abgleich.domain.statement.Notification::deduplicationKeys)).toList();
+    }
 
     @Test
     void valid_file_is_parsed_into_its_format() {
         ParsedStatementFile file = parse(validFile());
 
         assertThat(file.format()).isEqualTo(format());
-        assertThat(file.statements()).isNotEmpty();
-        assertThat(file.statements()).flatMap(Statement::entries).extracting(StatementEntry::direction)
+        assertThat(entries(file)).isNotEmpty();
+        assertThat(entries(file)).extracting(StatementEntry::direction)
                 .as("the sample file must contain credits and debits")
                 .contains(Direction.CREDIT, Direction.DEBIT);
     }
 
     @Test
     void B09_transactions_always_add_up_to_their_entry() {
-        List<StatementEntry> entries = parse(validFile()).statements().stream()
-                .flatMap(statement -> statement.entries().stream()).toList();
-
-        assertThat(entries).allSatisfy(this::assertTransactionsAddUp);
+        assertThat(entries(parse(validFile()))).allSatisfy(this::assertTransactionsAddUp);
     }
 
     @Test
     void B10_every_entry_has_a_positive_amount_and_a_direction() {
-        assertThat(parse(validFile()).statements()).flatMap(Statement::entries).allSatisfy(entry -> {
+        assertThat(entries(parse(validFile()))).allSatisfy(entry -> {
             assertThat(entry.direction()).isNotNull();
             assertThat(entry.amount().isPositive()).isTrue();
         });
@@ -88,6 +106,7 @@ public abstract class StatementParserContract {
 
     @Test
     void B11_closing_balance_one_cent_off_rejects_the_whole_file() {
+        org.junit.jupiter.api.Assumptions.assumeTrue(hasBalances(), "format without balances");
         InvalidStatementException rejected = reject(validFileWithClosingBalanceOneCentHigher());
 
         assertThat(rejected.reason()).isEqualTo(Reason.UNBALANCED);
@@ -107,7 +126,7 @@ public abstract class StatementParserContract {
     void B13_format_is_recognized_by_content_and_other_formats_are_not_claimed() {
         assertThat(parser().canParse(StatementSniff.of(validFile()))).isTrue();
         FORMAT_SAMPLES.forEach((name, sample) -> {
-            if (!name.equals(format().name())) {
+            if (!name.equals(format().name().replaceFirst("_V\\d+$", ""))) {
                 assertThat(parser().canParse(StatementSniff.of(sample))).as("claims a %s file", name).isFalse();
             }
         });
@@ -115,10 +134,8 @@ public abstract class StatementParserContract {
 
     @Test
     void B16_parsing_the_same_file_again_gives_the_same_deduplication_keys() {
-        List<List<DeduplicationKey>> first = parse(validFile()).statements().stream()
-                .map(Statement::deduplicationKeys).toList();
-        List<List<DeduplicationKey>> second = parse(validFile()).statements().stream()
-                .map(Statement::deduplicationKeys).toList();
+        List<List<DeduplicationKey>> first = keys(parse(validFile()));
+        List<List<DeduplicationKey>> second = keys(parse(validFile()));
 
         assertThat(second).isEqualTo(first);
         assertThat(first).allSatisfy(keys -> assertThat(keys).doesNotHaveDuplicates());
@@ -181,8 +198,8 @@ public abstract class StatementParserContract {
             assertThat(rejected.getMessage()).isNotBlank();
             return;
         }
-        assertThat(file.statements()).isNotEmpty();
-        file.statements().forEach(statement -> statement.entries().forEach(this::assertTransactionsAddUp));
+        assertThat(file.statements().isEmpty()).isNotEqualTo(file.notifications().isEmpty());
+        entries(file).forEach(this::assertTransactionsAddUp);
     }
 
     private void assertTransactionsAddUp(StatementEntry entry) {

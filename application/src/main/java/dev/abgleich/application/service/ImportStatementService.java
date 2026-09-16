@@ -59,6 +59,10 @@ public final class ImportStatementService implements ImportStatementUseCase {
         Objects.requireNonNull(command, "command");
         Instant receivedAt = clock.instant();
         ReadFile file = read(command);
+        if (file.parsed().isNotification()) {
+            return new ImportResult(Outcome.ENRICHED, file.parsed().format(), List.of(),
+                    repository.enrich(file.parsed().notifications()));
+        }
 
         List<NewStatementImport> imports = file.parsed().statements().stream()
                 .map(statement -> new NewStatementImport(UUID.randomUUID(), command.source(), file.parsed().format(),

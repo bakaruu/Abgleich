@@ -66,6 +66,25 @@ class InvoiceTest {
     }
 
     @Test
+    void B10_reversed_payment_reopens_the_invoice() {
+        Invoice paid = invoice("480.00", REGULAR_IBAN, SCOR).withConfirmedPayment(Money.chf("480.00"));
+
+        Invoice reopened = paid.withReversedPayment(Money.chf("480.00"));
+
+        assertThat(reopened.status()).isEqualTo(InvoiceStatus.OPEN);
+        assertThatThrownBy(() -> reopened.withReversedPayment(Money.chf("0.01")))
+                .isInstanceOf(InvalidInvoiceException.class);
+    }
+
+    @Test
+    void B31_invoice_with_payments_cannot_be_cancelled() {
+        Invoice partial = invoice("480.00", REGULAR_IBAN, SCOR).withConfirmedPayment(Money.chf("100.00"));
+
+        assertThatThrownBy(partial::cancel).isInstanceOf(InvalidInvoiceException.class).hasMessageContaining("reverse them");
+        assertThat(invoice("480.00", REGULAR_IBAN, SCOR).cancel().status()).isEqualTo(InvoiceStatus.CANCELLED);
+    }
+
+    @Test
     void B06_payment_in_another_currency_is_rejected() {
         Invoice invoice = invoice("480.00", REGULAR_IBAN, SCOR);
 

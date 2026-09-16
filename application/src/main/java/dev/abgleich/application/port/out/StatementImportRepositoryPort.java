@@ -1,7 +1,9 @@
 package dev.abgleich.application.port.out;
 
+import dev.abgleich.application.port.in.EnrichedNotification;
 import dev.abgleich.application.port.in.ImportedStatement;
 import dev.abgleich.domain.account.Iban;
+import dev.abgleich.domain.statement.Notification;
 import java.util.List;
 
 public interface StatementImportRepositoryPort {
@@ -17,4 +19,11 @@ public interface StatementImportRepositoryPort {
 
     /** Earlier imports of the same file, or of the same camt message for one of the accounts. */
     List<ImportedStatement> findPrevious(String fileSha256, String messageId, List<Iban> accounts);
+
+    /**
+     * Adds details from a camt.054 to transactions already stored by a statement: only empty fields are
+     * filled, nothing is overwritten and no transaction is created (B12). Entries are found by the same
+     * deduplication key a statement produces.
+     */
+    List<EnrichedNotification> enrich(List<Notification> notifications);
 }
