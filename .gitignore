@@ -28,3 +28,5 @@ application-local.yml
 
 # jqwik stores failing samples locally
 .jqwik-database
+
+CLAUDE.md
