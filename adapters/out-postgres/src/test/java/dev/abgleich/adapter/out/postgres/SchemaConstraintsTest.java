@@ -187,13 +187,18 @@ class SchemaConstraintsTest {
     private void insertAllocation(UUID transactionId, UUID invoiceId, String status) throws SQLException {
         try (PreparedStatement insert = connection.prepareStatement("""
                 insert into allocation
-                    (id, transaction_id, invoice_id, amount, rule, confidence, explanation, status, created_at)
-                values (?, ?, ?, 480.00, 'R4', 0.80, 'Invoice number found in remittance text', ?, now())
+                    (id, transaction_id, invoice_id, amount, rule, confidence, explanation, status,
+                     decided_by, decided_at, created_at)
+                values (?, ?, ?, 480.00, 'R4', 0.80, 'Invoice number found in remittance text', ?,
+                        case when ? = 'PROPOSED' then null else 'reviewer' end,
+                        case when ? = 'PROPOSED' then null else now() end, now())
                 """)) {
             insert.setObject(1, UUID.randomUUID());
             insert.setObject(2, transactionId);
             insert.setObject(3, invoiceId);
             insert.setString(4, status);
+            insert.setString(5, status);
+            insert.setString(6, status);
             insert.executeUpdate();
         }
     }

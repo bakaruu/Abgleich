@@ -7,7 +7,6 @@ import dev.abgleich.application.port.out.StatementImportRepositoryPort;
 import dev.abgleich.application.port.out.StorageException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.money.Money;
-import dev.abgleich.domain.reference.PaymentReference;
 import dev.abgleich.domain.statement.Balance;
 import dev.abgleich.domain.statement.DeduplicationKey;
 import dev.abgleich.domain.statement.Statement;
@@ -150,21 +149,12 @@ public final class JdbcStatementImportRepository implements StatementImportRepos
             UUID.randomUUID(), importId, statement.account().value(), key.value(),
             entry.bookingDate(), entry.valueDate(), entry.direction().name(),
             amount.amount(), amount.currency().getCurrencyCode(),
-            detail == null ? null : referenceText(detail.reference()),
+            detail == null ? null : References.text(detail.reference()),
             detail == null ? null : fit(detail.remittanceText(), 500),
             fit(bankReference, 35),
             detail == null ? null : fit(detail.endToEndId(), 35),
             detail == null ? null : fit(detail.counterpartyName(), 140),
             entry.reversal()
-        };
-    }
-
-    private static String referenceText(PaymentReference reference) {
-        return switch (reference) {
-            case PaymentReference.Qrr qrr -> qrr.value().value();
-            case PaymentReference.Scor scor -> scor.value().value();
-            case PaymentReference.FreeText text -> text.value();
-            case PaymentReference.None none -> null;
         };
     }
 

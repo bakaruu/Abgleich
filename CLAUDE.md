@@ -25,8 +25,9 @@ F1 import end-to-end (started 16 Sep 2026) — done so far:
 3. `StatementParserContract` in `application` test fixtures; every parser extends it.
 4. `ImportStatementService` + `JdbcStatementImportRepository` (Spring JDBC, ADR 0005), V2 migration,
    B21 concurrent upload test in `bootstrap`.
-Next: 5. `Invoice`/`Allocation` aggregates, rule R1, auto-confirm policy (B22, B27, B28);
-6. REST + "Subir extracto" UI (B32, B35, B42); 7. synthetic data generator.
+5. `Invoice`, `Allocation`, domain `Matcher` with rule R1 and `AutoConfirmPolicy` (B27, B28);
+   `RegisterInvoiceService`, `ReconcileService` with optimistic locking and bounded retries (B22), V3 migration.
+Next: 6. REST + "Subir extracto" UI (B32, B35, B42); 7. synthetic data generator.
 
 Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 2026.
 

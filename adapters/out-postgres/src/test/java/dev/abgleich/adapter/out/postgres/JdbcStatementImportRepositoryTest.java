@@ -22,20 +22,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
-@Testcontainers
 class JdbcStatementImportRepositoryTest {
 
     private static final Iban SWISS = Iban.of("CH4431999123000889012");
@@ -44,30 +35,13 @@ class JdbcStatementImportRepositoryTest {
     private static final LocalDate SEP_15 = LocalDate.of(2026, 9, 15);
     private static final Instant RECEIVED = Instant.parse("2026-09-15T20:05:00Z");
 
-    @Container
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:17-alpine")
-            .withCreateContainerCmdModifier(cmd -> cmd.withName("abgleich-test-postgres-import-repository"));
-
-    private static PGSimpleDataSource dataSource;
-
     private JdbcStatementImportRepository repository;
     private JdbcTemplate jdbc;
 
-    @BeforeAll
-    static void migrate() {
-        dataSource = new PGSimpleDataSource();
-        dataSource.setUrl(POSTGRES.getJdbcUrl());
-        dataSource.setUser(POSTGRES.getUsername());
-        dataSource.setPassword(POSTGRES.getPassword());
-        Flyway.configure().dataSource(dataSource).load().migrate();
-    }
-
     @BeforeEach
     void setUp() {
-        jdbc = new JdbcTemplate(dataSource);
-        jdbc.execute("truncate allocation, bank_transaction, invoice, statement_import");
-        repository = new JdbcStatementImportRepository(dataSource,
-                new TransactionTemplate(new DataSourceTransactionManager(dataSource)));
+        jdbc = TestDatabase.emptied();
+        repository = new JdbcStatementImportRepository(TestDatabase.dataSource(), TestDatabase.transactions());
     }
 
     @Test

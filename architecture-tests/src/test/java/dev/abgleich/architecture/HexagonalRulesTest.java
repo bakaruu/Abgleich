@@ -29,6 +29,8 @@ class HexagonalRulesTest {
     void every_layer_and_adapter_has_production_classes() {
         assertThat(List.of(
                 "dev.abgleich.domain.statement",
+                "dev.abgleich.domain.invoice",
+                "dev.abgleich.domain.matching",
                 "dev.abgleich.application.port.in",
                 "dev.abgleich.application.port.out",
                 "dev.abgleich.application.service",
