@@ -1,0 +1,12 @@
+# Normalize text files to LF in the repository.
+* text=auto eol=lf
+
+# Windows scripts need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Bank statement fixtures must be byte-exact: never convert line endings
+# or encodings (Norma 43 is fixed-width and often ISO-8859-1). See B19, B20.
+**/fixtures/** -text -diff
+
+*.jar binary

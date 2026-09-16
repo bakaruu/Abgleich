@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: abgleich
+  datasource:
+    url: ${ABGLEICH_DB_URL:jdbc:postgresql://localhost:5432/abgleich}
+    username: ${ABGLEICH_DB_USER:abgleich}
+    password: ${ABGLEICH_DB_PASSWORD:abgleich-local-only}
+  flyway:
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 20MB       # B42: bank statements larger than this are rejected
+      max-request-size: 21MB
+
+server:
+  error:
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  structured:
+    format:
+      console: ecs              # JSON logs; never log full IBANs or names (B41)
