@@ -7,6 +7,7 @@ dependencies {
     testImplementation(project(":domain"))
     testImplementation(project(":application"))
     testImplementation(project(":adapters:out-camt"))
+    testImplementation(project(":adapters:out-norma43"))
     testImplementation(project(":adapters:out-postgres"))
     testImplementation(project(":bootstrap"))
     testImplementation(libs.archunit.junit5)

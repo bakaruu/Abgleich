@@ -38,6 +38,11 @@ public record Statement(
         return openingBalance.amount().currency();
     }
 
+    /** One key per entry, in the same order as {@link #entries()} (B16). */
+    public List<DeduplicationKey> deduplicationKeys() {
+        return DeduplicationKey.forEntries(entries);
+    }
+
     private static void requireBalanced(Money opening, Money closing, List<StatementEntry> entries) {
         requireSameCurrency(opening, closing);
         Money expected = opening;
