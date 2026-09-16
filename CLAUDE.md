@@ -19,7 +19,7 @@ https://claude.ai/artifact/PwSWua5FPB5nCV3cB2c8Sv — read it before starting a 
 F0 foundations — done: Gradle multi-module skeleton, value objects, ArchUnit rules, Flyway V1 schema
 with constraint tests, Spring Boot bootstrap, local compose, CI, ADRs 0001–0004.
 
-F1 import end-to-end (started 16 Sep 2026) — done so far:
+F1 import end-to-end — done (16 Sep 2026, planned for 13 Oct):
 1. camt.053.001.04 parser (`adapters/out-camt`) into the format-neutral `Statement` model.
 2. Norma 43 parser (`adapters/out-norma43`) and `DeduplicationKey` (B16).
 3. `StatementParserContract` in `application` test fixtures; every parser extends it.
@@ -30,7 +30,12 @@ F1 import end-to-end (started 16 Sep 2026) — done so far:
 6. `adapters/in-rest` (JSON, Problem Details) and `adapters/in-web` (Thymeleaf + htmx upload screen),
    `ProcessStatementService`, statement report query, Spring Security with CSRF and strict CSP
    (B32, B35, B42). UI text is English. HTTP tests use `Browser` + `@AbgleichIntegrationTest`.
-Next: 7. synthetic data generator (and "load example" data for the upload screen).
+7. `adapters/out-synthetic`: deterministic `SyntheticDataGenerator` (Swiss camt.053 + Spanish Norma 43,
+   16 invoices, every payment labelled with its expected outcome), "Load example" and example downloads.
+   `bootstrap` tests read fixtures from the parser modules (no copies).
+
+Next: F2 matching and review (rules R2–R6, partial/over-payments, reversals, review queue and invoices
+screens, camt.054 + camt.053 v08 + CSV, labelled dataset and `evaluateMatching`). Read the plan first.
 
 Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 2026.
 

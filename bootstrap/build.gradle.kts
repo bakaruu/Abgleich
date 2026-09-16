@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":adapters:out-camt"))
     implementation(project(":adapters:out-norma43"))
     implementation(project(":adapters:out-postgres"))
+    implementation(project(":adapters:out-synthetic"))
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
@@ -25,4 +26,10 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
+}
+
+// End-to-end tests read the byte-exact fixtures owned by the parser modules instead of keeping copies.
+sourceSets.test {
+    resources.srcDir(project(":adapters:out-camt").file("src/test/resources"))
+    resources.srcDir(project(":adapters:out-norma43").file("src/test/resources"))
 }

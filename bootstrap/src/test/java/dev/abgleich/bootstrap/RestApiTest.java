@@ -22,7 +22,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @AbgleichIntegrationTest
 class RestApiTest {
 
-    private static final byte[] NORMA43 = fixture("spain-two-accounts-2026-09-15.n43");
+    private static final byte[] NORMA43 = fixture("norma43/spain-two-accounts-2026-09-15.n43");
     private static final String INVOICE_87 = """
             {"invoiceNumber": "FV-2026-0087", "creditorIban": "ES91 2100 0418 4502 0005 1332",
              "debtorName": "Talleres Ruiz SL", "amount": "1815.00", "currency": "EUR",

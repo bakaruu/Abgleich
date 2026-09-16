@@ -44,8 +44,27 @@
         </div>
     </form>
 
+    <section class="examples" aria-labelledby="examples-title">
+        <div>
+            <h2 id="examples-title">No files at hand?</h2>
+            <p class="hint">Load synthetic invoices with a Swiss and a Spanish statement that pay them, or download
+                the files and upload them yourself. Loading twice changes nothing.</p>
+            <ul class="downloads">
+                <li th:each="file : ${exampleFiles}">
+                    <a th:href="@{/examples/files/{name}(name=${file.name()})}" th:text="${file.name()}">example.xml</a>
+                    <small class="muted" th:text="${file.description()}">Swiss camt.053</small>
+                </li>
+            </ul>
+        </div>
+        <form th:action="@{/examples}" method="post" th:hx-post="@{/examples}" hx-target="#result"
+              hx-swap="innerHTML" hx-disabled-elt="find button" hx-indicator="find .progress">
+            <button type="submit" class="secondary">Load example</button>
+            <span class="progress htmx-indicator" role="status">Loading…</span>
+        </form>
+    </section>
+
     <section id="result" aria-live="polite">
-        <div th:fragment="result" th:if="${error != null or result != null}">
+        <div th:fragment="result" th:if="${error != null or results != null}">
 
             <div th:if="${error != null}" class="alert alert-error" role="alert">
                 <strong>File rejected.</strong>
@@ -53,7 +72,14 @@
                 <span>Nothing was stored.</span>
             </div>
 
-            <th:block th:if="${result != null}">
+            <div th:if="${example != null}" class="alert alert-ok" role="status">
+                <strong>Example loaded.</strong>
+                <span th:text="|${example.invoicesRegistered()} invoices registered, ${example.invoicesAlreadyPresent()} already present.|">
+                    16 invoices registered, 0 already present.</span>
+            </div>
+
+            <th:block th:each="result : ${results}">
+                <h2 class="file-title" th:if="${result.title() != null}" th:text="${result.title()}">statement.xml</h2>
                 <div class="alert" th:classappend="${result.alreadyImported()} ? 'alert-known' : 'alert-ok'" role="status">
                     <strong th:text="${result.alreadyImported()} ? 'Already imported.' : 'Imported.'">Imported.</strong>
                     <span th:if="${result.alreadyImported()}">This file was imported before; nothing was stored twice.</span>

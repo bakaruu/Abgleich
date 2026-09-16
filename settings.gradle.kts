@@ -12,6 +12,7 @@ include(
     "adapters:out-camt",
     "adapters:out-norma43",
     "adapters:out-postgres",
+    "adapters:out-synthetic",
     "bootstrap",
     "architecture-tests",
 )

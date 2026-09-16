@@ -11,6 +11,7 @@ dependencies {
     testImplementation(project(":adapters:out-camt"))
     testImplementation(project(":adapters:out-norma43"))
     testImplementation(project(":adapters:out-postgres"))
+    testImplementation(project(":adapters:out-synthetic"))
     testImplementation(project(":bootstrap"))
     testImplementation(libs.archunit.junit5)
 }

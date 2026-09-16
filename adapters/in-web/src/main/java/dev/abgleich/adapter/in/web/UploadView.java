@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /** What the result fragment shows. Labels are decided here so the template stays free of logic. */
-public record UploadView(boolean alreadyImported, String format, List<AccountView> accounts) {
+public record UploadView(String title, boolean alreadyImported, String format, List<AccountView> accounts) {
 
-    static UploadView of(StatementProcessed processed, StatementReportQuery reports) {
+    /** @param title the file name when it is known, or {@code null} */
+    static UploadView of(StatementProcessed processed, StatementReportQuery reports, String title) {
         ImportResult imported = processed.imported();
         List<AccountView> accounts = IntStream.range(0, imported.statements().size())
                 .mapToObj(i -> {
@@ -28,7 +29,7 @@ public record UploadView(boolean alreadyImported, String format, List<AccountVie
             case CAMT053_V04 -> "camt.053 (ISO 20022, version 001.04)";
             case NORMA43 -> "Norma 43 (AEB)";
         };
-        return new UploadView(imported.outcome() == ImportResult.Outcome.ALREADY_IMPORTED, format, accounts);
+        return new UploadView(title, imported.outcome() == ImportResult.Outcome.ALREADY_IMPORTED, format, accounts);
     }
 
     public record AccountView(ImportedStatement statement, ReconciliationRun run, List<LineView> lines) {

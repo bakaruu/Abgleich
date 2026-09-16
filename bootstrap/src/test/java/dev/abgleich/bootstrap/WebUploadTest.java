@@ -26,7 +26,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @AbgleichIntegrationTest
 class WebUploadTest {
 
-    private static final byte[] CAMT = fixture("swiss-day-2026-09-15.xml");
+    private static final byte[] CAMT = fixture("camt053/swiss-day-2026-09-15.xml");
     private static final Map<String, String> HTMX = map("HX-Request", "true");
 
     @Value("${local.server.port}")

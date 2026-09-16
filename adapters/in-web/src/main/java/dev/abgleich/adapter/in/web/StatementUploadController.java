@@ -7,6 +7,7 @@ import dev.abgleich.application.port.in.StatementProcessed;
 import dev.abgleich.application.port.in.StatementReportQuery;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -53,7 +54,7 @@ class StatementUploadController {
         try {
             StatementProcessed processed = processStatement.process(
                     new ImportStatementCommand(ImportSource.WEB, file::getInputStream));
-            model.addAttribute("result", UploadView.of(processed, reports));
+            model.addAttribute("results", List.of(UploadView.of(processed, reports, file.getOriginalFilename())));
         } catch (InvalidStatementException rejected) {
             response.setStatus(HttpStatus.UNPROCESSABLE_CONTENT.value());
             model.addAttribute("error", rejected.getMessage());

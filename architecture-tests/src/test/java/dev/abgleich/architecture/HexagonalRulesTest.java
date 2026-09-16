@@ -39,6 +39,7 @@ class HexagonalRulesTest {
                 "dev.abgleich.adapter.out.camt",
                 "dev.abgleich.adapter.out.norma43",
                 "dev.abgleich.adapter.out.postgres",
+                "dev.abgleich.adapter.out.synthetic",
                 "dev.abgleich.bootstrap"))
                 .allSatisfy(pkg -> assertThat(ALL.stream().anyMatch(c -> c.getPackageName().equals(pkg)))
                         .as("production classes in %s", pkg)

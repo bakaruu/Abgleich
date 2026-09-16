@@ -33,8 +33,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @AbgleichIntegrationTest
 class ImportStatementIntegrationTest {
 
-    private static final byte[] CAMT = fixture("swiss-day-2026-09-15.xml");
-    private static final byte[] NORMA43 = fixture("spain-two-accounts-2026-09-15.n43");
+    private static final byte[] CAMT = fixture("camt053/swiss-day-2026-09-15.xml");
+    private static final byte[] NORMA43 = fixture("norma43/spain-two-accounts-2026-09-15.n43");
 
     @Autowired
     ImportStatementUseCase importStatement;

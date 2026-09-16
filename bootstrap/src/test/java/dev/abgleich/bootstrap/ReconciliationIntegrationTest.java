@@ -38,7 +38,7 @@ class ReconciliationIntegrationTest {
     private static final Iban QR_ACCOUNT = Iban.of("CH4431999123000889012");
     private static final Iban REGULAR_ACCOUNT = Iban.of("CH9300762011623852957");
     private static final String SCOR = "RF18539007547034";
-    private static final byte[] CAMT = fixture("swiss-day-2026-09-15.xml");
+    private static final byte[] CAMT = fixture("camt053/swiss-day-2026-09-15.xml");
 
     @Autowired
     RegisterInvoiceUseCase registerInvoice;

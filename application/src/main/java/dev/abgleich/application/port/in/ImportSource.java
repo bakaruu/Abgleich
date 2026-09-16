@@ -5,5 +5,7 @@ public enum ImportSource {
     WEB,
     REST,
     SFTP,
-    BANK_API
+    BANK_API,
+    /** Synthetic example data loaded from the UI; the public demo purges it (B43). */
+    EXAMPLE
 }

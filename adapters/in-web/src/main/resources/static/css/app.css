@@ -130,6 +130,30 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .progress { color: var(--muted); font-size: 14px; opacity: 0; transition: opacity .2s; }
 .htmx-request .progress, .htmx-request.progress { opacity: 1; }
 
+button.secondary { color: var(--accent); background: transparent; border: 1.5px solid var(--accent); }
+
+.examples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-top: 16px;
+    padding: 16px 20px;
+    border: 1px dashed var(--rule);
+    border-radius: 8px;
+}
+
+.examples > div { flex: 1 1 420px; min-width: 0; }
+.examples h2 { font-size: 16px; }
+.examples form { display: flex; align-items: center; gap: 12px; }
+.downloads { list-style: none; padding: 0; margin: 8px 0 0; font-size: 14.5px; }
+.downloads li + li { margin-top: 6px; }
+.downloads a { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+.downloads small { display: block; }
+
+.file-title { font-family: ui-monospace, Consolas, monospace; font-size: 15px; margin: 28px 0 10px; overflow-wrap: anywhere; }
+
 #result { margin-top: 28px; }
 
 .alert { border: 1px solid; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }

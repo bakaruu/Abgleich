@@ -34,6 +34,18 @@ final class Browser {
         return send(HttpRequest.newBuilder(URI.create(baseUrl + path)).GET());
     }
 
+    HttpResponse<byte[]> getBytes(String path) {
+        try {
+            return client.send(HttpRequest.newBuilder(URI.create(baseUrl + path)).GET().build(),
+                    HttpResponse.BodyHandlers.ofByteArray());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
     /** Opens the upload page and returns the CSRF token of this session. */
     String csrfToken() {
         Matcher matcher = CSRF_META.matcher(get("/").body());
