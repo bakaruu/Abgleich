@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic data only: every name, IBAN and reference is invented or a specification example (B41). -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.04">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>ABG-CH-20260915-0001</MsgId>
+      <CreDtTm>2026-09-15T22:05:00+02:00</CreDtTm>
+    </GrpHdr>
+    <!-- Statement 1: QR-IBAN account receiving QR-bill payments. -->
+    <Stmt>
+      <Id>ABG-CH-20260915-QR</Id>
+      <ElctrncSeqNb>258</ElctrncSeqNb>
+      <CreDtTm>2026-09-15T22:05:00+02:00</CreDtTm>
+      <FrToDt>
+        <FrDtTm>2026-09-15T00:00:00+02:00</FrDtTm>
+        <ToDtTm>2026-09-15T23:59:59+02:00</ToDtTm>
+      </FrToDt>
+      <Acct>
+        <Id><IBAN>CH4431999123000889012</IBAN></Id>
+        <Ccy>CHF</Ccy>
+      </Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="CHF">10000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-09-14</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="CHF">14238.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-09-15</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLAV</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="CHF">14238.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-09-15</Dt></Dt>
+      </Bal>
+      <TxsSummry>
+        <TtlNtries><NbOfNtries>3</NbOfNtries></TtlNtries>
+      </TxsSummry>
+      <!-- Single QR-bill payment. -->
+      <Ntry>
+        <Amt Ccy="CHF">1250.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-15</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000123</AcctSvcrRef>
+        <BkTxCd>
+          <Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>VCOM</SubFmlyCd></Fmly></Domn>
+        </BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <AcctSvcrRef>BNK20260915000123-1</AcctSvcrRef>
+              <EndToEndId>NOTPROVIDED</EndToEndId>
+            </Refs>
+            <AmtDtls><TxAmt><Amt Ccy="CHF">1250.00</Amt></TxAmt></AmtDtls>
+            <RltdPties>
+              <Dbtr><Nm>Muster Handwerk GmbH</Nm></Dbtr>
+            </RltdPties>
+            <RmtInf>
+              <Strd>
+                <CdtrRefInf>
+                  <Tp><CdOrPrtry><Prtry>QRR</Prtry></CdOrPrtry></Tp>
+                  <Ref>210000000003139471430009017</Ref>
+                </CdtrRefInf>
+              </Strd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <!-- Batch booking: one entry of 3'000 with three payments of 1'000 (B09). -->
+      <Ntry>
+        <Amt Ccy="CHF">3000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-16</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000124</AcctSvcrRef>
+        <BkTxCd>
+          <Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>VCOM</SubFmlyCd></Fmly></Domn>
+        </BkTxCd>
+        <NtryDtls>
+          <Btch><NbOfTxs>3</NbOfTxs></Btch>
+          <TxDtls>
+            <Refs><AcctSvcrRef>BNK20260915000124-1</AcctSvcrRef></Refs>
+            <AmtDtls><TxAmt><Amt Ccy="CHF">1000.00</Amt></TxAmt></AmtDtls>
+            <RltdPties><Dbtr><Nm>Beispiel Treuhand AG</Nm></Dbtr></RltdPties>
+            <RmtInf><Strd><CdtrRefInf>
+              <Tp><CdOrPrtry><Prtry>QRR</Prtry></CdOrPrtry></Tp>
+              <Ref>000000000000002026091500017</Ref>
+            </CdtrRefInf></Strd></RmtInf>
+          </TxDtls>
+          <TxDtls>
+            <Refs><AcctSvcrRef>BNK20260915000124-2</AcctSvcrRef></Refs>
+            <AmtDtls><TxAmt><Amt Ccy="CHF">1000.00</Amt></TxAmt></AmtDtls>
+            <RltdPties><Dbtr><Nm>Beispiel Treuhand AG</Nm></Dbtr></RltdPties>
+            <RmtInf><Strd><CdtrRefInf>
+              <Tp><CdOrPrtry><Prtry>QRR</Prtry></CdOrPrtry></Tp>
+              <Ref>000000000000002026091500025</Ref>
+            </CdtrRefInf></Strd></RmtInf>
+          </TxDtls>
+          <TxDtls>
+            <Refs><AcctSvcrRef>BNK20260915000124-3</AcctSvcrRef></Refs>
+            <AmtDtls><TxAmt><Amt Ccy="CHF">1000.00</Amt></TxAmt></AmtDtls>
+            <RltdPties><Dbtr><Nm>Beispiel Treuhand AG</Nm></Dbtr></RltdPties>
+            <RmtInf><Strd><CdtrRefInf>
+              <Tp><CdOrPrtry><Prtry>QRR</Prtry></CdOrPrtry></Tp>
+              <Ref>000000000000002026091500030</Ref>
+            </CdtrRefInf></Strd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <!-- Bank fee: a debit never pays an invoice (B10). -->
+      <Ntry>
+        <Amt Ccy="CHF">12.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-15</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000125</AcctSvcrRef>
+        <BkTxCd>
+          <Domn><Cd>ACMT</Cd><Fmly><Cd>MDOP</Cd><SubFmlyCd>CHRG</SubFmlyCd></Fmly></Domn>
+        </BkTxCd>
+        <AddtlNtryInf>Kontoführungsgebühr September</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+    <!-- Statement 2: regular IBAN account with a creditor reference, free text and no reference. -->
+    <Stmt>
+      <Id>ABG-CH-20260915-STD</Id>
+      <CreDtTm>2026-09-15T22:05:00+02:00</CreDtTm>
+      <Acct>
+        <Id><IBAN>CH9300762011623852957</IBAN></Id>
+        <Ccy>CHF</Ccy>
+      </Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>PRCD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="CHF">2500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-09-14</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="CHF">4660.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-09-15</Dt></Dt>
+      </Bal>
+      <Ntry>
+        <Amt Ccy="CHF">480.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-15</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000201</AcctSvcrRef>
+        <BkTxCd><Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>AUTT</SubFmlyCd></Fmly></Domn></BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <Refs><EndToEndId>E2E-2026-0142</EndToEndId></Refs>
+            <RltdPties><Dbtr><Nm>Alpenblick Hotel SA</Nm></Dbtr></RltdPties>
+            <RmtInf><Strd><CdtrRefInf>
+              <Tp><CdOrPrtry><Cd>SCOR</Cd></CdOrPrtry></Tp>
+              <Ref>RF18539007547034</Ref>
+            </CdtrRefInf></Strd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="CHF">480.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-15</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000202</AcctSvcrRef>
+        <BkTxCd><Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>AUTT</SubFmlyCd></Fmly></Domn></BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <RltdPties><Dbtr><Nm>Zürcher Bäckerei Löwen</Nm></Dbtr></RltdPties>
+            <RmtInf>
+              <Ustrd>Rechnung 143</Ustrd>
+              <Ustrd>vielen Dank</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="CHF">1200.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <BookgDt><Dt>2026-09-15</Dt></BookgDt>
+        <ValDt><Dt>2026-09-15</Dt></ValDt>
+        <AcctSvcrRef>BNK20260915000203</AcctSvcrRef>
+        <BkTxCd><Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>AUTT</SubFmlyCd></Fmly></Domn></BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <RltdPties><Dbtr><Nm>Brunner &amp; Co. AG</Nm></Dbtr></RltdPties>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <!-- Pending entries are not booked and do not count towards the balances. -->
+      <Ntry>
+        <Amt Ccy="CHF">99.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts>PDNG</Sts>
+        <BookgDt><Dt>2026-09-16</Dt></BookgDt>
+        <BkTxCd><Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>AUTT</SubFmlyCd></Fmly></Domn></BkTxCd>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>
