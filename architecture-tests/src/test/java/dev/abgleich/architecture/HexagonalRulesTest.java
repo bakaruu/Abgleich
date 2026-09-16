@@ -35,15 +35,21 @@ class HexagonalRulesTest {
                 "dev.abgleich.application.port.in",
                 "dev.abgleich.application.port.out",
                 "dev.abgleich.application.service",
+                "dev.abgleich.adapter.in.kafka",
                 "dev.abgleich.adapter.in.rest",
+                "dev.abgleich.adapter.in.scheduler",
+                "dev.abgleich.adapter.in.sftp",
                 "dev.abgleich.adapter.in.web",
+                "dev.abgleich.adapter.out.bankapi",
                 "dev.abgleich.adapter.out.camt",
                 "dev.abgleich.adapter.out.csv",
+                "dev.abgleich.adapter.out.kafka",
                 "dev.abgleich.adapter.out.norma43",
                 "dev.abgleich.adapter.out.postgres",
                 "dev.abgleich.adapter.out.synthetic",
                 "dev.abgleich.adapter.out.synthetic.evaluation",
-                "dev.abgleich.bootstrap"))
+                "dev.abgleich.bootstrap",
+                "dev.abgleich.bootstrap.config"))
                 .allSatisfy(pkg -> assertThat(ALL.stream().anyMatch(c -> c.getPackageName().equals(pkg)))
                         .as("production classes in %s", pkg)
                         .isTrue());

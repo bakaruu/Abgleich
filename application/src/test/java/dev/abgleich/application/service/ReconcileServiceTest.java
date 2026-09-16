@@ -8,6 +8,7 @@ import dev.abgleich.application.port.out.ReconciliationRepositoryPort;
 import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
+import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.invoice.InvoiceStatus;
 import dev.abgleich.domain.matching.Allocation;
@@ -60,6 +61,32 @@ class ReconcileServiceTest {
         assertThat(invoices.byId.get(exact.id()).status()).isEqualTo(InvoiceStatus.PAID);
         assertThat(reconciliations.proposed).singleElement().extracting(Allocation::rule)
                 .isEqualTo(dev.abgleich.domain.matching.MatchRule.R4);
+    }
+
+    @Test
+    void B23_auto_confirmation_hands_the_invoice_paid_event_to_the_same_write() {
+        Invoice exact = invoice("F-2026-0142", "480.00", SCOR);
+        invoices.add(exact);
+        reconciliations.pending.add(credit("480.00", SCOR, null));
+
+        service.reconcilePending(ACCOUNT);
+
+        assertThat(reconciliations.events).singleElement().satisfies(event -> {
+            assertThat(event).isInstanceOf(InvoiceEvent.InvoicePaid.class);
+            assertThat(event.invoiceId()).isEqualTo(exact.id());
+            assertThat(event.occurredAt()).isEqualTo(NOW);
+        });
+    }
+
+    @Test
+    void B23_a_refused_write_leaves_no_event_behind() {
+        invoices.add(invoice("F-2026-0142", "480.00", SCOR));
+        reconciliations.pending.add(credit("480.00", SCOR, null));
+        reconciliations.staleWrites = Integer.MAX_VALUE;
+
+        service.reconcilePending(ACCOUNT);
+
+        assertThat(reconciliations.events).isEmpty();
     }
 
     @Test
@@ -136,6 +163,7 @@ class ReconcileServiceTest {
         });
         assertThat(reconciliations.reopenedInvoices).singleElement()
                 .extracting(Invoice::status).isEqualTo(InvoiceStatus.OPEN);
+        assertThat(reconciliations.events).singleElement().isInstanceOf(InvoiceEvent.InvoiceReopened.class);
     }
 
     private static Invoice invoice(String number, String amount, PaymentReference reference) {
@@ -179,6 +207,7 @@ class ReconcileServiceTest {
         private final List<PaymentToMatch> reversals = new ArrayList<>();
         private final Map<UUID, Set<Set<UUID>>> rejected = new HashMap<>();
         private final List<Allocation> confirmed = new ArrayList<>();
+        private final List<InvoiceEvent> events = new ArrayList<>();
         private final List<Allocation> proposed = new ArrayList<>();
         private final List<Allocation> reversedAllocations = new ArrayList<>();
         private final List<Invoice> reopenedInvoices = new ArrayList<>();
@@ -206,9 +235,11 @@ class ReconcileServiceTest {
         }
 
         @Override
-        public void recordConfirmed(PaymentToMatch payment, List<Allocation> allocations, List<Invoice> settledInvoices) {
+        public void recordConfirmed(PaymentToMatch payment, List<Allocation> allocations, List<Invoice> settledInvoices,
+                List<InvoiceEvent> invoiceEvents) {
             failIfStale();
             confirmed.addAll(allocations);
+            events.addAll(invoiceEvents);
             settledInvoices.forEach(invoice -> invoices.byId.put(invoice.id(), invoice));
         }
 
@@ -230,9 +261,10 @@ class ReconcileServiceTest {
 
         @Override
         public void recordReversal(PaymentToMatch reversal, ReversedPayment payment, List<Allocation> allocations,
-                List<Invoice> reopened) {
+                List<Invoice> reopened, List<InvoiceEvent> invoiceEvents) {
             reversedAllocations.addAll(allocations);
             reopenedInvoices.addAll(reopened);
+            events.addAll(invoiceEvents);
         }
 
         private void failIfStale() {

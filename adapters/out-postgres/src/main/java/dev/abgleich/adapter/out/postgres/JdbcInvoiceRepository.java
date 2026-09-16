@@ -39,16 +39,21 @@ public final class JdbcInvoiceRepository implements InvoiceRepositoryPort {
     public void add(Invoice invoice) {
         try {
             client.sql("insert into invoice (" + COLUMNS + ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                    .params(invoice.id(), invoice.number().value(), invoice.creditorAccount().value(),
-                            invoice.debtorName(), invoice.amount().amount(), invoice.amount().currency().getCurrencyCode(),
-                            References.text(invoice.reference()), invoice.dueDate(), invoice.paidAmount().amount(),
-                            invoice.status().name(), invoice.version())
+                    .params(values(invoice))
                     .update();
         } catch (DuplicateKeyException e) {
             throw new DuplicateInvoiceException("Invoice " + invoice.number() + " already exists", e);
         } catch (DataAccessException e) {
             throw new StorageException("The invoice could not be stored", e);
         }
+    }
+
+    /** Values for {@link #COLUMNS}, in that order. */
+    static Object[] values(Invoice invoice) {
+        return new Object[] {invoice.id(), invoice.number().value(), invoice.creditorAccount().value(),
+                invoice.debtorName(), invoice.amount().amount(), invoice.amount().currency().getCurrencyCode(),
+                References.text(invoice.reference()), invoice.dueDate(), invoice.paidAmount().amount(),
+                invoice.status().name(), invoice.version()};
     }
 
     @Override

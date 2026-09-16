@@ -41,8 +41,17 @@ version (B33, B34), reversals (B10), rematch on invoice registration (B30); camt
 300-case labelled dataset with `./gradlew evaluateMatching`; golden file `GoldenFileTest` (update with
 `-Pgolden.update=true`, review the diff).
 
-Next: F3 integrations (outbox + Kafka out B23, Kafka invoice consumer B24, SFTP watcher B25, mock bank +
-scheduler with ShedLock, equivalence test Web = REST = SFTP = API). Read the plan first.
+F3 integrations — done (17 Sep 2026, planned for 17 Nov): `InvoiceEvent` in the domain; transactional outbox
+written by the reconciliation and review repositories, relay `PublishEventsService` + `adapters/out-kafka`
+(B23, ADR 0008); `adapters/in-kafka` `InvoiceCreated` consumer with dead letter topic and `processed_message`
+inbox, also behind REST `Idempotency-Key` (B24); `adapters/in-sftp` with `.done` markers, `processed/` and
+`error/` (B25, embedded SFTP server in its test fixtures); `mock-bank` + `adapters/out-bank-api` with a sliding
+fetch window; `adapters/in-scheduler` jobs locked with ShedLock (B26, ADR 0009); V5 migration;
+`ChannelEquivalenceTest` (web = REST = SFTP = bank API). Tests run with `abgleich.scheduling.enabled=false`
+and trigger jobs themselves.
+
+Next: F4 showcase (Summary screen, Prometheus + Grafana incl. `abgleich_outbox_pending`, VPS + Caddy, demo mode
+B43 B44, Playwright smoke test, README with GIF, outbox retention). Read the plan first.
 
 Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 2026.
 
@@ -50,8 +59,8 @@ Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 
 
 Java 21 (toolchain), Spring Boot 4.1.1, Gradle 9.7.1 (wrapper, Kotlin DSL, version catalog in
 `gradle/libs.versions.toml`, conventions in `build-logic`), PostgreSQL 17, Flyway, Testcontainers,
-JUnit 5, AssertJ, jqwik, ArchUnit, Spring JDBC, Thymeleaf + htmx 2, Spring Security, Apache Commons CSV.
-Planned: Kafka, SFTP.
+JUnit 5, AssertJ, jqwik, ArchUnit, Spring JDBC, Thymeleaf + htmx 2, Spring Security, Apache Commons CSV,
+Spring Kafka (Kafka 4.2), Spring Integration SFTP (Apache MINA SSHD), ShedLock 7.
 
 ## Commands
 
@@ -59,8 +68,9 @@ Planned: Kafka, SFTP.
 ./gradlew build                       # everything, needs Docker running
 ./gradlew :domain:test                # fast, no Docker
 ./gradlew evaluateMatching            # precision per rule over 300 labelled payments
-docker compose up -d                  # local PostgreSQL
+docker compose up -d                  # local PostgreSQL, Kafka, SFTP drop
 ./gradlew :bootstrap:bootRun
+./gradlew :mock-bank:run              # bank statement API on :8090 for local runs
 ```
 
 ## Non-negotiable rules
@@ -84,4 +94,5 @@ docker compose up -d                  # local PostgreSQL
 
 - `domain/` pure model · `application/` use cases + ports · `adapters/<in|out>-<tech>/`
 - `bootstrap/` Spring Boot wiring · `architecture-tests/` ArchUnit · `docs/adr/` decisions
+- `mock-bank/` stand-in bank API for tests and local runs, outside the hexagon
 - Bank file fixtures go under `**/fixtures/**` and are byte-exact (see `.gitattributes`).

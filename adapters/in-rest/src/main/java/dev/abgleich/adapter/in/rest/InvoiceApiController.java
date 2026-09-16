@@ -4,8 +4,12 @@ import dev.abgleich.adapter.in.rest.ApiJson.InvoiceCreated;
 import dev.abgleich.adapter.in.rest.ApiJson.RegisterInvoiceRequest;
 import dev.abgleich.application.port.in.CancelInvoiceUseCase;
 import dev.abgleich.application.port.in.InvoiceQuery;
+import dev.abgleich.application.port.in.InvoiceReceipt;
+import dev.abgleich.application.port.in.MessageChannel;
+import dev.abgleich.application.port.in.ReceiveInvoiceUseCase;
 import dev.abgleich.application.port.in.RegisterInvoiceCommand;
 import dev.abgleich.application.port.in.RegisterInvoiceUseCase;
+import dev.abgleich.application.port.out.DuplicateInvoiceException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.invoice.InvoiceStatus;
@@ -24,28 +28,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/invoices")
 class InvoiceApiController {
 
+    static final String IDEMPOTENCY_KEY = "Idempotency-Key";
+
     private final RegisterInvoiceUseCase registerInvoice;
+    private final ReceiveInvoiceUseCase receiveInvoice;
     private final CancelInvoiceUseCase cancelInvoice;
     private final InvoiceQuery invoices;
 
-    InvoiceApiController(RegisterInvoiceUseCase registerInvoice, CancelInvoiceUseCase cancelInvoice,
-            InvoiceQuery invoices) {
+    InvoiceApiController(RegisterInvoiceUseCase registerInvoice, ReceiveInvoiceUseCase receiveInvoice,
+            CancelInvoiceUseCase cancelInvoice, InvoiceQuery invoices) {
         this.registerInvoice = registerInvoice;
+        this.receiveInvoice = receiveInvoice;
         this.cancelInvoice = cancelInvoice;
         this.invoices = invoices;
     }
 
-    /** Raw JSON becomes value objects here; invalid input never reaches the use case (B04, B05). */
+    /**
+     * Raw JSON becomes value objects here; invalid input never reaches the use case (B04, B05).
+     *
+     * <p>With an {@code Idempotency-Key}, a client can retry after a timeout without knowing whether the first
+     * request arrived: the retry gets the same invoice id with 200 instead of 201, and nothing is stored twice
+     * (B24). The same key with another invoice is refused with 422.
+     */
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    InvoiceCreated register(@RequestBody RegisterInvoiceRequest request) {
+    ResponseEntity<InvoiceCreated> register(@RequestBody RegisterInvoiceRequest request,
+            @RequestHeader(name = IDEMPOTENCY_KEY, required = false) String idempotencyKey) {
         Currency currency = Currency.getInstance(required(request.currency(), "currency").toUpperCase(Locale.ROOT));
         RegisterInvoiceCommand command = new RegisterInvoiceCommand(
                 InvoiceNumber.of(required(request.invoiceNumber(), "invoiceNumber")),
@@ -54,8 +67,21 @@ class InvoiceApiController {
                 Money.of(required(request.amount(), "amount"), currency),
                 PaymentReference.parse(request.reference()),
                 required(request.dueDate(), "dueDate"));
-        UUID id = registerInvoice.register(command);
-        return new InvoiceCreated(id);
+        if (idempotencyKey == null) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(new InvoiceCreated(registerInvoice.register(command)));
+        }
+        if (!ReceiveInvoiceUseCase.MESSAGE_ID.matcher(idempotencyKey).matches()) {
+            throw new BadRequestException("Header '" + IDEMPOTENCY_KEY + "' must have 1 to 64 letters, digits or . _ : -");
+        }
+        InvoiceReceipt receipt = receiveInvoice.receive(MessageChannel.REST, idempotencyKey, command);
+        return switch (receipt.outcome()) {
+            case REGISTERED -> ResponseEntity.status(receipt.redelivered() ? HttpStatus.OK : HttpStatus.CREATED)
+                    .header("Idempotent-Replayed", Boolean.toString(receipt.redelivered()))
+                    .body(new InvoiceCreated(receipt.invoiceId()));
+            case DUPLICATE_NUMBER -> throw new DuplicateInvoiceException("Invoice " + command.number() + " already exists", null);
+            case ID_REUSED -> throw new IdempotencyKeyReusedException(
+                    "This " + IDEMPOTENCY_KEY + " was already used for another invoice. Use a new key for a new invoice.");
+        };
     }
 
     @GetMapping

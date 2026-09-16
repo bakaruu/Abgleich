@@ -42,7 +42,7 @@ class WebUploadTest {
 
     @BeforeEach
     void setUp() {
-        jdbc.execute("truncate allocation, bank_transaction, invoice, statement_import");
+        jdbc.execute("truncate outbox_event, processed_message, allocation, bank_transaction, invoice, statement_import");
         browser = new Browser(port);
     }
 

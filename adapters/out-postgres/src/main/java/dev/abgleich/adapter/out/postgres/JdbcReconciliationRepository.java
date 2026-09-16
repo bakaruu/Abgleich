@@ -5,6 +5,7 @@ import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.application.port.out.StorageException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
+import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.matching.Allocation;
 import dev.abgleich.domain.matching.AllocationStatus;
 import dev.abgleich.domain.matching.PaymentToMatch;
@@ -85,11 +86,13 @@ public final class JdbcReconciliationRepository implements ReconciliationReposit
     }
 
     @Override
-    public void recordConfirmed(PaymentToMatch payment, List<Allocation> confirmed, List<Invoice> settledInvoices) {
+    public void recordConfirmed(PaymentToMatch payment, List<Allocation> confirmed, List<Invoice> settledInvoices,
+            List<InvoiceEvent> events) {
         write(() -> {
             markPayment(payment.transactionId(), payment.version(), "UNMATCHED", "MATCHED");
             settledInvoices.forEach(invoice -> JdbcInvoiceRepository.update(client, invoice));
             confirmed.forEach(allocation -> AllocationRows.insert(client, allocation));
+            events.forEach(event -> OutboxRows.insert(client, event));
         });
     }
 
@@ -151,13 +154,14 @@ public final class JdbcReconciliationRepository implements ReconciliationReposit
 
     @Override
     public void recordReversal(PaymentToMatch reversal, ReversedPayment original, List<Allocation> reversedAllocations,
-            List<Invoice> reopenedInvoices) {
+            List<Invoice> reopenedInvoices, List<InvoiceEvent> events) {
         write(() -> {
             markPayment(reversal.transactionId(), reversal.version(), "UNMATCHED", "MATCHED");
             markPayment(original.transactionId(), original.version(), "MATCHED", "REVERSED");
             reversedAllocations.forEach(allocation ->
                     AllocationRows.decide(client, allocation, AllocationStatus.CONFIRMED));
             reopenedInvoices.forEach(invoice -> JdbcInvoiceRepository.update(client, invoice));
+            events.forEach(event -> OutboxRows.insert(client, event));
         });
     }
 

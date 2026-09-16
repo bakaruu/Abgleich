@@ -12,6 +12,7 @@ import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.application.port.out.StatementFormat;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
+import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.invoice.InvoiceStatus;
 import dev.abgleich.domain.matching.Allocation;
@@ -104,7 +105,10 @@ class JdbcReviewRepositoryTest {
         reviews.recordConfirmation(group,
                 List.of(group.allocations().getFirst().confirm("reviewer", NOW)),
                 List.of(group.invoices().getFirst().withConfirmedPayment(Money.eur("1815.00"))),
-                List.of(group.otherProposals().getFirst().reject("reviewer", NOW, "Another proposal was confirmed")));
+                List.of(group.otherProposals().getFirst().reject("reviewer", NOW, "Another proposal was confirmed")),
+                InvoiceEvent.between(group.invoices().getFirst(),
+                        group.invoices().getFirst().withConfirmedPayment(Money.eur("1815.00")), UUID::randomUUID, NOW)
+                        .stream().toList());
 
         assertThat(jdbc.queryForObject("select status from bank_transaction", String.class)).isEqualTo("MATCHED");
         assertThat(jdbc.queryForList("select status from allocation order by status", String.class))
@@ -116,6 +120,8 @@ class JdbcReviewRepositoryTest {
             assertThat(allocation.decidedBy()).isEqualTo("reviewer");
         });
         assertThat(queries.pendingReview(10)).isEmpty();
+        assertThat(jdbc.queryForObject("select invoice_number from outbox_event where event_type = 'INVOICE_PAID'",
+                String.class)).as("B23: stored with the decision").isEqualTo("FV-2026-0087");
     }
 
     @Test
@@ -123,9 +129,9 @@ class JdbcReviewRepositoryTest {
         ProposalGroup group = reviews.findGroup(proposalFirst.groupId()).orElseThrow();
         List<Allocation> confirmed = List.of(group.allocations().getFirst().confirm("reviewer", NOW));
         List<Invoice> settled = List.of(group.invoices().getFirst().withConfirmedPayment(Money.eur("1815.00")));
-        reviews.recordConfirmation(group, confirmed, settled, List.of());
+        reviews.recordConfirmation(group, confirmed, settled, List.of(), List.of());
 
-        assertThat(catchThrowable(() -> reviews.recordConfirmation(group, confirmed, settled, List.of())))
+        assertThat(catchThrowable(() -> reviews.recordConfirmation(group, confirmed, settled, List.of(), List.of())))
                 .isInstanceOf(StaleDataException.class);
         assertThat(jdbc.queryForObject("select paid_amount from invoice where id = ?", java.math.BigDecimal.class, first.id()))
                 .isEqualByComparingTo("1815.00");

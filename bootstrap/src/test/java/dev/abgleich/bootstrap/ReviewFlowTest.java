@@ -55,7 +55,7 @@ class ReviewFlowTest {
 
     @BeforeEach
     void setUp() {
-        jdbc.execute("truncate allocation, bank_transaction, invoice, statement_import");
+        jdbc.execute("truncate outbox_event, processed_message, allocation, bank_transaction, invoice, statement_import");
         browser = new Browser(port);
         invoiceId = registerInvoice.register(new RegisterInvoiceCommand(InvoiceNumber.of("FV-2026-0087"), ACCOUNT,
                 "Talleres Ruiz SL", Money.eur("1815.00"), PaymentReference.none(), LocalDate.of(2026, 9, 30)));

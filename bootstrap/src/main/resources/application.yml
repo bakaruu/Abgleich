@@ -11,6 +11,19 @@ spring:
     multipart:
       max-file-size: 20MB       # B42: bank statements larger than this are rejected
       max-request-size: 21MB
+  kafka:
+    bootstrap-servers: ${ABGLEICH_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all                 # B23: an event counts as published only when every replica has it
+      properties:
+        enable.idempotence: true
+        max.block.ms: 10000
+        request.timeout.ms: 10000
+        delivery.timeout.ms: 20000
+    consumer:
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: record          # B24: the offset moves on only after the invoice is stored
 
 server:
   error:
@@ -29,3 +42,42 @@ logging:
   structured:
     format:
       console: ecs              # JSON logs; never log full IBANs or names (B41)
+  level:
+    org.apache.kafka: WARN      # client connection chatter; Spring Kafka still logs listener problems
+
+abgleich:
+  scheduling:
+    enabled: true
+  kafka:
+    consumer-group: abgleich-invoices
+    partitions: 3
+    replicas: ${ABGLEICH_KAFKA_REPLICAS:1}
+    topics:
+      invoice-events: abgleich.invoice-events
+      invoice-created: abgleich.invoices.created
+      invoice-created-dead-letter: abgleich.invoices.created.dead-letter
+  outbox:
+    relay-interval: PT2S
+    acknowledgement-timeout: PT15S
+  # B25: files are taken only with a <name>.done marker, then moved to processed/ or error/.
+  sftp:
+    enabled: ${ABGLEICH_SFTP_ENABLED:false}
+    host: ${ABGLEICH_SFTP_HOST:localhost}
+    port: ${ABGLEICH_SFTP_PORT:2222}
+    user: ${ABGLEICH_SFTP_USER:bank}
+    password: ${ABGLEICH_SFTP_PASSWORD:}
+    private-key: ${ABGLEICH_SFTP_PRIVATE_KEY:}
+    known-hosts: ${ABGLEICH_SFTP_KNOWN_HOSTS:}
+    allow-unknown-keys: ${ABGLEICH_SFTP_ALLOW_UNKNOWN_KEYS:false}
+    root: /
+    poll-interval: PT30S
+    max-files-per-poll: 20
+  bank-api:
+    enabled: ${ABGLEICH_BANK_API_ENABLED:false}
+    base-url: ${ABGLEICH_BANK_API_URL:http://localhost:8090}
+    token: ${ABGLEICH_BANK_API_TOKEN:}
+    accounts: ${ABGLEICH_BANK_API_ACCOUNTS:CH4431999123000889012,CH9300762011623852957,ES9121000418450200051332}
+    lookback-days: 7
+    fetch-interval: PT15M
+    connect-timeout: PT5S
+    read-timeout: PT30S

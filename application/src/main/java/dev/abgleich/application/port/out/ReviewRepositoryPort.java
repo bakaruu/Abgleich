@@ -1,6 +1,7 @@
 package dev.abgleich.application.port.out;
 
 import dev.abgleich.domain.invoice.Invoice;
+import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.matching.Allocation;
 import dev.abgleich.domain.money.Money;
 import dev.abgleich.domain.statement.TransactionStatus;
@@ -15,12 +16,12 @@ public interface ReviewRepositoryPort {
 
     /**
      * In one transaction: confirms the group, rejects the payment's other active proposals, updates the
-     * invoices and marks the payment matched.
+     * invoices, marks the payment matched and stores the events these changes cause (B23).
      *
      * @throws StaleDataException if the payment, an allocation or an invoice changed since it was read (B33, B34)
      */
     void recordConfirmation(ProposalGroup group, List<Allocation> confirmed, List<Invoice> settledInvoices,
-            List<Allocation> superseded);
+            List<Allocation> superseded, List<InvoiceEvent> events);
 
     /**
      * In one transaction: rejects the group; the payment stays proposed while other proposals remain,

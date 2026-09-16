@@ -10,6 +10,7 @@ import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.application.port.out.StatementFormat;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
+import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.matching.Allocation;
 import dev.abgleich.domain.matching.AllocationStatus;
@@ -81,10 +82,17 @@ class JdbcReconciliationRepositoryTest {
         PaymentToMatch payment = scorPayment();
         List<Allocation> confirmed = autoConfirmed(payment);
 
-        repository.recordConfirmed(payment, confirmed, List.of(invoice.withConfirmedPayment(payment.amount())));
+        Invoice settled = invoice.withConfirmedPayment(payment.amount());
+
+        repository.recordConfirmed(payment, confirmed, List.of(settled), events(invoice, settled));
 
         assertThat(row("select status, version from bank_transaction where id = ?", payment.transactionId()))
                 .containsEntry("status", "MATCHED").containsEntry("version", 1L);
+        assertThat(row("select event_type, invoice_number, paid_amount, published_at from outbox_event where invoice_id = ?",
+                invoice.id()))
+                .as("B23: the event commits with the change")
+                .containsEntry("event_type", "INVOICE_PAID").containsEntry("invoice_number", "F-2026-0142")
+                .containsEntry("published_at", null);
         assertThat(row("select status, version from invoice where id = ?", invoice.id()))
                 .containsEntry("status", "PAID").containsEntry("version", 1L);
         assertThat(row("select rule, status, decided_by, group_id from allocation where id = ?", confirmed.getFirst().id()))
@@ -99,12 +107,14 @@ class JdbcReconciliationRepositoryTest {
         jdbc.update("update bank_transaction set version = version + 1 where id = ?", payment.transactionId());
 
         Throwable refused = catchThrowable(() -> repository.recordConfirmed(payment, autoConfirmed(payment),
-                List.of(invoice.withConfirmedPayment(payment.amount()))));
+                List.of(invoice.withConfirmedPayment(payment.amount())),
+                events(invoice, invoice.withConfirmedPayment(payment.amount()))));
 
         assertThat(refused).isInstanceOf(StaleDataException.class);
         assertThat(row("select status, version from invoice where id = ?", invoice.id()))
                 .containsEntry("status", "OPEN").containsEntry("version", 0L);
         assertThat(count("allocation")).isZero();
+        assertThat(count("outbox_event")).as("B23: a rolled back change leaves no event").isZero();
     }
 
     @Test
@@ -113,9 +123,11 @@ class JdbcReconciliationRepositoryTest {
         jdbc.update("update invoice set paid_amount = 480, status = 'PAID', version = 1 where id = ?", invoice.id());
 
         Throwable refused = catchThrowable(() -> repository.recordConfirmed(payment, autoConfirmed(payment),
-                List.of(invoice.withConfirmedPayment(payment.amount()))));
+                List.of(invoice.withConfirmedPayment(payment.amount())),
+                events(invoice, invoice.withConfirmedPayment(payment.amount()))));
 
         assertThat(refused).isInstanceOf(StaleDataException.class).hasMessageContaining("F-2026-0142");
+        assertThat(count("outbox_event")).as("B23").isZero();
         assertThat(row("select status, version from bank_transaction where id = ?", payment.transactionId()))
                 .containsEntry("status", "UNMATCHED").containsEntry("version", 0L);
         assertThat(count("allocation")).isZero();
@@ -178,7 +190,8 @@ class JdbcReconciliationRepositoryTest {
     void B10_reversal_finds_the_single_matched_credit_and_undoes_it_atomically() {
         PaymentToMatch payment = scorPayment();
         List<Allocation> confirmed = autoConfirmed(payment);
-        repository.recordConfirmed(payment, confirmed, List.of(invoice.withConfirmedPayment(payment.amount())));
+        repository.recordConfirmed(payment, confirmed, List.of(invoice.withConfirmedPayment(payment.amount())),
+                events(invoice, invoice.withConfirmedPayment(payment.amount())));
         storeStatement("b", List.of(entry("480.00", Direction.DEBIT, LocalDate.of(2026, 9, 17), "BNK-9", true,
                 new TransactionDetail(null, SCOR, null, null, "E2E-142", null))), "-480.00");
 
@@ -190,7 +203,8 @@ class JdbcReconciliationRepositoryTest {
         Invoice paid = original.invoices().getFirst();
         repository.recordReversal(reversal, original,
                 List.of(original.allocations().getFirst().reverse("system", NOW, "Reversed by the bank")),
-                List.of(paid.withReversedPayment(Money.chf("480.00"))));
+                List.of(paid.withReversedPayment(Money.chf("480.00"))),
+                events(paid, paid.withReversedPayment(Money.chf("480.00"))));
 
         assertThat(row("select status from bank_transaction where id = ?", payment.transactionId()))
                 .containsEntry("status", "REVERSED");
@@ -199,6 +213,8 @@ class JdbcReconciliationRepositoryTest {
         assertThat(row("select status, paid_amount from invoice where id = ?", invoice.id()))
                 .containsEntry("status", "OPEN");
         assertThat(repository.findPendingReversals(ACCOUNT)).isEmpty();
+        assertThat(jdbc.queryForList("select event_type from outbox_event order by position", String.class))
+                .containsExactly("INVOICE_PAID", "INVOICE_REOPENED");
     }
 
     @Test
@@ -209,6 +225,10 @@ class JdbcReconciliationRepositoryTest {
         PaymentToMatch reversal = repository.findPendingReversals(ACCOUNT).getFirst();
 
         assertThat(repository.findReversedCredit(reversal)).as("the SCOR credit is not matched yet").isEmpty();
+    }
+
+    private static List<InvoiceEvent> events(Invoice before, Invoice after) {
+        return InvoiceEvent.between(before, after, UUID::randomUUID, NOW).stream().toList();
     }
 
     private PaymentToMatch scorPayment() {

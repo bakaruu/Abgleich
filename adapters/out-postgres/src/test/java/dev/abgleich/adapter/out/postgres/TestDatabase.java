@@ -44,7 +44,7 @@ final class TestDatabase {
 
     static JdbcTemplate emptied() {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource());
-        jdbc.execute("truncate allocation, bank_transaction, invoice, statement_import");
+        jdbc.execute("truncate outbox_event, processed_message, allocation, bank_transaction, invoice, statement_import");
         return jdbc;
     }
 }

@@ -90,8 +90,9 @@ public final class ReconcileService implements ReconcileUseCase {
         return switch (decision) {
             case ReconciliationDecision.NoMatch noMatch -> Outcome.UNMATCHED;
             case ReconciliationDecision.AutoConfirmed confirmed -> {
-                reconciliations.recordConfirmed(payment, confirmed.allocations(),
-                        settle(confirmed.allocations(), candidates));
+                List<Invoice> settled = settle(confirmed.allocations(), candidates);
+                reconciliations.recordConfirmed(payment, confirmed.allocations(), settled,
+                        InvoiceEvents.between(candidates, settled, clock.instant()));
                 yield Outcome.AUTO_CONFIRMED;
             }
             case ReconciliationDecision.NeedsReview review -> {
@@ -118,7 +119,8 @@ public final class ReconcileService implements ReconcileUseCase {
                 .map(allocation -> byId.get(allocation.invoiceId()).withReversedPayment(allocation.settledAmount()))
                 .toList();
         try {
-            reconciliations.recordReversal(reversal, original.get(), reversed, reopened);
+            reconciliations.recordReversal(reversal, original.get(), reversed, reopened,
+                    InvoiceEvents.between(original.get().invoices(), reopened, now));
             return true;
         } catch (StaleDataException stale) {
             return false;

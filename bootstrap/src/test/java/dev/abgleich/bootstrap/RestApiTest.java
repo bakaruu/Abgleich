@@ -39,7 +39,7 @@ class RestApiTest {
 
     @BeforeEach
     void setUp() {
-        jdbc.execute("truncate allocation, bank_transaction, invoice, statement_import");
+        jdbc.execute("truncate outbox_event, processed_message, allocation, bank_transaction, invoice, statement_import");
         api = new Browser(port);
     }
 
@@ -61,6 +61,27 @@ class RestApiTest {
         assertThat(duplicate.headers().firstValue("Content-Type")).hasValueSatisfying(type ->
                 assertThat(type).startsWith("application/problem+json"));
         assertThat(duplicate.body()).contains("\"type\":\"urn:abgleich:problem:duplicate-invoice\"");
+    }
+
+    @Test
+    void B24_retry_with_the_same_idempotency_key_returns_the_same_invoice() {
+        Map<String, String> key = map("Idempotency-Key", "erp-request-0087");
+
+        HttpResponse<String> first = api.postJson("/api/v1/invoices", INVOICE_87, key);
+        HttpResponse<String> retry = api.postJson("/api/v1/invoices", INVOICE_87, key);
+        HttpResponse<String> otherInvoice = api.postJson("/api/v1/invoices",
+                INVOICE_87.replace("FV-2026-0087", "FV-2026-0088"), key);
+        HttpResponse<String> badKey = api.postJson("/api/v1/invoices", INVOICE_87, map("Idempotency-Key", "a/b"));
+
+        assertThat(first.statusCode()).isEqualTo(201);
+        assertThat(first.headers().firstValue("Idempotent-Replayed")).hasValue("false");
+        assertThat(retry.statusCode()).isEqualTo(200);
+        assertThat(retry.headers().firstValue("Idempotent-Replayed")).hasValue("true");
+        assertThat(retry.body()).isEqualTo(first.body());
+        assertThat(otherInvoice.statusCode()).isEqualTo(422);
+        assertThat(otherInvoice.body()).contains("urn:abgleich:problem:idempotency-key-reused");
+        assertThat(badKey.statusCode()).isEqualTo(400);
+        assertThat(jdbc.queryForList("select invoice_number from invoice", String.class)).containsExactly("FV-2026-0087");
     }
 
     @Test

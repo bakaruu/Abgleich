@@ -47,6 +47,12 @@ class ApiExceptionHandler {
         return problem(HttpStatus.CONFLICT, "duplicate-invoice", "Invoice already exists", e.getMessage());
     }
 
+    @ExceptionHandler
+    ProblemDetail idempotencyKeyReused(IdempotencyKeyReusedException e) {
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, "idempotency-key-reused", "Idempotency key already used",
+                e.getMessage());
+    }
+
     /** B34: a stale decision is 412 Precondition Failed, the standard answer to an outdated If-Match. */
     @ExceptionHandler
     ProblemDetail decisionRefused(DecisionRefusedException e) {

@@ -8,6 +8,7 @@ import dev.abgleich.application.port.out.ReviewRepositoryPort;
 import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
+import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.invoice.InvoiceStatus;
 import dev.abgleich.domain.matching.Allocation;
@@ -62,6 +63,8 @@ class ReviewServiceTest {
             assertThat(a.decidedAt()).isEqualTo(NOW);
         });
         assertThat(reviews.settled).singleElement().extracting(Invoice::status).isEqualTo(InvoiceStatus.PAID);
+        assertThat(reviews.events).as("B23: stored with the decision").singleElement()
+                .satisfies(event -> assertThat(event.number()).isEqualTo(invoice.number()));
         assertThat(reviews.superseded).singleElement().satisfies(a -> {
             assertThat(a.status()).isEqualTo(AllocationStatus.REJECTED);
             assertThat(a.decisionNote()).isEqualTo(ReviewService.SUPERSEDED);
@@ -141,6 +144,7 @@ class ReviewServiceTest {
         private ProposalGroup raceWith;
         private int writes;
         private final List<Allocation> confirmed = new ArrayList<>();
+        private final List<InvoiceEvent> events = new ArrayList<>();
         private final List<Invoice> settled = new ArrayList<>();
         private final List<Allocation> superseded = new ArrayList<>();
         private final List<Allocation> rejected = new ArrayList<>();
@@ -152,13 +156,14 @@ class ReviewServiceTest {
 
         @Override
         public void recordConfirmation(ProposalGroup read, List<Allocation> allocations, List<Invoice> invoices,
-                List<Allocation> others) {
+                List<Allocation> others, List<InvoiceEvent> invoiceEvents) {
             if (raceWith != null) {
                 group = raceWith;
                 throw new StaleDataException("the other click won");
             }
             writes++;
             confirmed.addAll(allocations);
+            events.addAll(invoiceEvents);
             settled.addAll(invoices);
             superseded.addAll(others);
         }

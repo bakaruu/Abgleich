@@ -4,6 +4,7 @@ import dev.abgleich.application.port.out.ReviewRepositoryPort;
 import dev.abgleich.application.port.out.StaleDataException;
 import dev.abgleich.application.port.out.StorageException;
 import dev.abgleich.domain.invoice.Invoice;
+import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.matching.Allocation;
 import dev.abgleich.domain.matching.AllocationStatus;
 import dev.abgleich.domain.money.Money;
@@ -60,12 +61,13 @@ public final class JdbcReviewRepository implements ReviewRepositoryPort {
 
     @Override
     public void recordConfirmation(ProposalGroup group, List<Allocation> confirmed, List<Invoice> settledInvoices,
-            List<Allocation> superseded) {
+            List<Allocation> superseded, List<InvoiceEvent> events) {
         write(() -> {
             markPayment(group, "MATCHED");
             confirmed.forEach(allocation -> AllocationRows.decide(client, allocation, AllocationStatus.PROPOSED));
             superseded.forEach(allocation -> AllocationRows.decide(client, allocation, AllocationStatus.PROPOSED));
             settledInvoices.forEach(invoice -> JdbcInvoiceRepository.update(client, invoice));
+            events.forEach(event -> OutboxRows.insert(client, event));
         });
     }
 

@@ -37,7 +37,7 @@ class ExampleDataIntegrationTest {
 
     @BeforeEach
     void emptyDatabase() {
-        jdbc.execute("truncate allocation, bank_transaction, invoice, statement_import");
+        jdbc.execute("truncate outbox_event, processed_message, allocation, bank_transaction, invoice, statement_import");
     }
 
     @Test

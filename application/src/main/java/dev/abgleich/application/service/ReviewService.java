@@ -51,7 +51,8 @@ public final class ReviewService implements ReviewProposalUseCase {
             List<Allocation> superseded = group.otherProposals().stream()
                     .map(a -> a.reject(reviewer, now, SUPERSEDED))
                     .toList();
-            reviews.recordConfirmation(group, confirmed, settled, superseded);
+            reviews.recordConfirmation(group, confirmed, settled, superseded,
+                    InvoiceEvents.between(group.invoices(), settled, now));
             return DecisionResult.done("Confirmed: " + group.transactionAmount() + " allocated to " + numbers(group) + ".");
         });
     }

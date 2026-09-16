@@ -57,7 +57,8 @@ class JdbcStatementReportRepositoryTest {
                 .filter(p -> p.reference().equals(SCOR)).findFirst().orElseThrow();
         ReconciliationDecision.AutoConfirmed decision =
                 (ReconciliationDecision.AutoConfirmed) new Matcher().decide(payment, List.of(invoice), NOW);
-        reconciliations.recordConfirmed(payment, decision.allocations(), List.of(invoice.withConfirmedPayment(payment.amount())));
+        reconciliations.recordConfirmed(payment, decision.allocations(), List.of(invoice.withConfirmedPayment(payment.amount())),
+                List.of());
 
         StatementReport report = reports.findReport(importId).orElseThrow();
 

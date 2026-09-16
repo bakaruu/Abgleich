@@ -6,10 +6,15 @@ plugins {
 
 dependencies {
     implementation(project(":application"))
+    implementation(project(":adapters:in-kafka"))
     implementation(project(":adapters:in-rest"))
+    implementation(project(":adapters:in-scheduler"))
+    implementation(project(":adapters:in-sftp"))
     implementation(project(":adapters:in-web"))
+    implementation(project(":adapters:out-bank-api"))
     implementation(project(":adapters:out-camt"))
     implementation(project(":adapters:out-csv"))
+    implementation(project(":adapters:out-kafka"))
     implementation(project(":adapters:out-norma43"))
     implementation(project(":adapters:out-postgres"))
     implementation(project(":adapters:out-synthetic"))
@@ -20,6 +25,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
+    implementation("org.springframework.boot:spring-boot-starter-kafka")
+    implementation("org.springframework.integration:spring-integration-sftp")
+    implementation(libs.shedlock.spring)
+    implementation(libs.shedlock.provider.jdbc)
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
 
@@ -27,6 +36,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.kafka)
+    testImplementation(testFixtures(project(":adapters:in-sftp")))
+    testImplementation(project(":mock-bank"))
 }
 
 // End-to-end tests read the byte-exact fixtures owned by the parser modules instead of keeping copies.
