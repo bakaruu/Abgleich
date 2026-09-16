@@ -10,8 +10,9 @@ build/
 .classpath
 .project
 .settings/
-bin/
-out/
+# Anchored to the root: a bare "out/" would also ignore source packages such as adapter/out
+/bin/
+/out/
 
 # OS
 .DS_Store

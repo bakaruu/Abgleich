@@ -8,6 +8,7 @@ import static dev.abgleich.architecture.ProductionClasses.ALL;
 import static dev.abgleich.architecture.ProductionClasses.APPLICATION;
 import static dev.abgleich.architecture.ProductionClasses.BOOTSTRAP;
 import static dev.abgleich.architecture.ProductionClasses.DOMAIN;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -15,9 +16,30 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class HexagonalRulesTest {
+
+    /**
+     * Rules with allowEmptyShould pass on missing code. If a package is lost (an ignore pattern once
+     * hid every "out" package from git), the build must fail instead of turning green on nothing.
+     */
+    @Test
+    void every_layer_and_adapter_has_production_classes() {
+        assertThat(List.of(
+                "dev.abgleich.domain.statement",
+                "dev.abgleich.application.port.in",
+                "dev.abgleich.application.port.out",
+                "dev.abgleich.application.service",
+                "dev.abgleich.adapter.out.camt",
+                "dev.abgleich.adapter.out.norma43",
+                "dev.abgleich.adapter.out.postgres",
+                "dev.abgleich.bootstrap"))
+                .allSatisfy(pkg -> assertThat(ALL.stream().anyMatch(c -> c.getPackageName().equals(pkg)))
+                        .as("production classes in %s", pkg)
+                        .isTrue());
+    }
 
     @Test
     void domain_depends_on_nothing_else_in_the_system() {
