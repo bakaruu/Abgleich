@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!--/* Bank files are untrusted input: text is always escaped with th:text (B32). */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload statement · Abgleich</title>
+    <meta name="csrf-token" th:content="${_csrf.token}">
+    <meta name="csrf-header" th:content="${_csrf.headerName}">
+    <meta name="htmx-config"
+          content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "4..", "swap": true, "error": false}, {"code": "...", "swap": false, "error": true}]}'>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/webjars/htmx.org/2.0.4/dist/htmx.min.js}" defer></script>
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" th:href="@{/}"><span class="cross" aria-hidden="true"></span>Abgleich</a>
+    <nav aria-label="Main">
+        <a class="active" th:href="@{/}" aria-current="page">Upload statement</a>
+        <span class="soon" title="Arrives in phase F2">Review</span>
+        <span class="soon" title="Arrives in phase F2">Invoices</span>
+        <span class="soon" title="Arrives in phase F4">Summary</span>
+    </nav>
+</header>
+
+<main class="page">
+    <section class="intro">
+        <h1>Upload a bank statement</h1>
+        <p>Abgleich detects the format from the file content, checks that the balances add up, stores each
+            payment once and confirms only exact matches on its own.</p>
+    </section>
+
+    <form class="upload" th:action="@{/statements}" method="post" enctype="multipart/form-data"
+          th:hx-post="@{/statements}" hx-encoding="multipart/form-data" hx-target="#result" hx-swap="innerHTML"
+          hx-disabled-elt="find button" hx-indicator="find .progress">
+        <label for="file">Statement file</label>
+        <input id="file" name="file" type="file" required>
+        <p class="hint">camt.053 (ISO 20022: Switzerland and SEPA) or Norma 43 (Spain), up to 20 MB.
+            Use synthetic data only.</p>
+        <div class="actions">
+            <button type="submit">Upload and reconcile</button>
+            <span class="progress htmx-indicator" role="status">Processing…</span>
+        </div>
+    </form>
+
+    <section id="result" aria-live="polite">
+        <div th:fragment="result" th:if="${error != null or result != null}">
+
+            <div th:if="${error != null}" class="alert alert-error" role="alert">
+                <strong>File rejected.</strong>
+                <span th:text="${error}">The file is not a supported bank statement.</span>
+                <span>Nothing was stored.</span>
+            </div>
+
+            <th:block th:if="${result != null}">
+                <div class="alert" th:classappend="${result.alreadyImported()} ? 'alert-known' : 'alert-ok'" role="status">
+                    <strong th:text="${result.alreadyImported()} ? 'Already imported.' : 'Imported.'">Imported.</strong>
+                    <span th:if="${result.alreadyImported()}">This file was imported before; nothing was stored twice.</span>
+                    <span>Format: <span th:text="${result.format()}">camt.053</span></span>
+                </div>
+
+                <article class="account" th:each="account : ${result.accounts()}">
+                    <header class="account-header">
+                        <h2 th:text="${account.statement().account()}">CH93 **** **** **** 5295 7</h2>
+                        <span class="badge badge-ok">Balances add up</span>
+                    </header>
+
+                    <dl class="figures">
+                        <div>
+                            <dt>Opening balance</dt>
+                            <dd><span class="num" th:text="${account.statement().openingBalance().amount()}">CHF 2500.00</span>
+                                <small th:text="${account.statement().openingBalance().date()}">2026-09-14</small></dd>
+                        </div>
+                        <div>
+                            <dt>Closing balance</dt>
+                            <dd><span class="num" th:text="${account.statement().closingBalance().amount()}">CHF 4660.00</span>
+                                <small th:text="${account.statement().closingBalance().date()}">2026-09-15</small></dd>
+                        </div>
+                        <div>
+                            <dt>New payments</dt>
+                            <dd class="num" th:text="${account.statement().newTransactions()}">3</dd>
+                        </div>
+                        <div>
+                            <dt>Already known</dt>
+                            <dd class="num" th:text="${account.statement().knownTransactions()}">0</dd>
+                        </div>
+                        <div>
+                            <dt>Confirmed by R1</dt>
+                            <dd class="num" th:text="${account.run().autoConfirmed()}">1</dd>
+                        </div>
+                        <div>
+                            <dt>Need review</dt>
+                            <dd class="num" th:text="${account.run().sentToReview()}">0</dd>
+                        </div>
+                    </dl>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th scope="col">Booked</th>
+                                <th scope="col" class="right">Amount</th>
+                                <th scope="col">Counterparty and remittance</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Invoice and reason</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="row : ${account.lines()}">
+                                <td class="nowrap" th:text="${row.line().bookingDate()}">2026-09-15</td>
+                                <td class="right nowrap num">
+                                    <span th:text="${row.sign()}">+</span><span th:text="${row.line().amount()}">CHF 480.00</span>
+                                </td>
+                                <td>
+                                    <div th:text="${row.line().counterpartyName()}">Alpenblick Hotel SA</div>
+                                    <small class="muted" th:text="${row.line().remittanceText()}">Rechnung 143</small>
+                                    <small class="muted mono" th:text="${row.line().reference()}">RF18539007547034</small>
+                                </td>
+                                <td><span class="status" th:classappend="${row.statusClass()}"
+                                          th:text="${row.statusLabel()}">Matched R1</span></td>
+                                <td>
+                                    <div class="mono" th:text="${row.line().invoiceNumber()}">F-2026-0142</div>
+                                    <small class="muted" th:text="${row.line().explanation()}">Creditor reference and amount match</small>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </th:block>
+        </div>
+    </section>
+</main>
+</body>
+</html>

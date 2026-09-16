@@ -27,13 +27,10 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /** The whole import against a real PostgreSQL: parsers, use case, repository and constraints. */
-@SpringBootTest
-@Import(PostgresTestConfiguration.class)
+@AbgleichIntegrationTest
 class ImportStatementIntegrationTest {
 
     private static final byte[] CAMT = fixture("swiss-day-2026-09-15.xml");

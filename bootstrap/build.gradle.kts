@@ -6,12 +6,16 @@ plugins {
 
 dependencies {
     implementation(project(":application"))
+    implementation(project(":adapters:in-rest"))
+    implementation(project(":adapters:in-web"))
     implementation(project(":adapters:out-camt"))
     implementation(project(":adapters:out-norma43"))
     implementation(project(":adapters:out-postgres"))
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")

@@ -27,7 +27,10 @@ F1 import end-to-end (started 16 Sep 2026) — done so far:
    B21 concurrent upload test in `bootstrap`.
 5. `Invoice`, `Allocation`, domain `Matcher` with rule R1 and `AutoConfirmPolicy` (B27, B28);
    `RegisterInvoiceService`, `ReconcileService` with optimistic locking and bounded retries (B22), V3 migration.
-Next: 6. REST + "Subir extracto" UI (B32, B35, B42); 7. synthetic data generator.
+6. `adapters/in-rest` (JSON, Problem Details) and `adapters/in-web` (Thymeleaf + htmx upload screen),
+   `ProcessStatementService`, statement report query, Spring Security with CSRF and strict CSP
+   (B32, B35, B42). UI text is English. HTTP tests use `Browser` + `@AbgleichIntegrationTest`.
+Next: 7. synthetic data generator (and "load example" data for the upload screen).
 
 Phases: F0 → 22 Sep, F1 → 13 Oct, F2 → 3 Nov, F3 → 17 Nov, F4 → 1 Dec 2026.
 

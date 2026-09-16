@@ -34,6 +34,8 @@ class HexagonalRulesTest {
                 "dev.abgleich.application.port.in",
                 "dev.abgleich.application.port.out",
                 "dev.abgleich.application.service",
+                "dev.abgleich.adapter.in.rest",
+                "dev.abgleich.adapter.in.web",
                 "dev.abgleich.adapter.out.camt",
                 "dev.abgleich.adapter.out.norma43",
                 "dev.abgleich.adapter.out.postgres",

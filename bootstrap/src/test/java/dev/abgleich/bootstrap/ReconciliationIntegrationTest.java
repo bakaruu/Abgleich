@@ -29,13 +29,10 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /** Invoices, a real camt import and rule R1 against PostgreSQL. */
-@SpringBootTest
-@Import(PostgresTestConfiguration.class)
+@AbgleichIntegrationTest
 class ReconciliationIntegrationTest {
 
     private static final Iban QR_ACCOUNT = Iban.of("CH4431999123000889012");

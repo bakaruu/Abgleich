@@ -15,6 +15,9 @@ spring:
 server:
   error:
     include-stacktrace: never
+  tomcat:
+    # Read the rest of an oversized upload so the client receives the 413 instead of a reset connection (B42).
+    max-swallow-size: 25MB
 
 management:
   endpoints:
