@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.out.OutboxRepositoryPort;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.events.port.out.OutboxRepositoryPort;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

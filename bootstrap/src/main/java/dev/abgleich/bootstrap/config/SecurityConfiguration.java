@@ -9,8 +9,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
 /**
- * Web security. There is no login yet (the public demo arrives in F4), but the protections that are
- * painful to add later are on from the start:
+ * Web security. There is no login: the public demo is open on purpose, holds only synthetic data and is limited
+ * per address instead (B44, {@code RateLimitFilter}). The protections that are painful to add later are on:
  * <ul>
  *   <li>CSRF for every state-changing request of the web UI, including htmx ones (B35);</li>
  *   <li>a strict Content-Security-Policy, so even an escaping mistake cannot run injected script (B32).</li>

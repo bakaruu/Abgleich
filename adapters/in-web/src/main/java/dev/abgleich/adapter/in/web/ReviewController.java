@@ -1,8 +1,8 @@
 package dev.abgleich.adapter.in.web;
 
-import dev.abgleich.application.port.in.DecisionResult;
-import dev.abgleich.application.port.in.ReviewProposalUseCase;
-import dev.abgleich.application.port.in.ReviewQueueQuery;
+import dev.abgleich.application.DecisionResult;
+import dev.abgleich.application.reconciliation.port.in.ReviewProposalUseCase;
+import dev.abgleich.application.reconciliation.port.in.ReviewQueueQuery;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.UUID;
 import org.springframework.stereotype.Controller;

@@ -1,10 +1,13 @@
 package dev.abgleich.adapter.in.rest;
 
-import dev.abgleich.application.port.in.ImportedStatement;
-import dev.abgleich.application.port.in.InvoiceQuery;
-import dev.abgleich.application.port.in.ReviewQueueQuery;
-import dev.abgleich.application.port.in.ReconciliationRun;
-import dev.abgleich.application.port.in.StatementReport;
+import dev.abgleich.application.invoice.InvoiceDetail;
+import dev.abgleich.application.invoice.InvoiceView;
+import dev.abgleich.application.invoice.port.in.InvoiceQuery;
+import dev.abgleich.application.reconciliation.ReviewItem;
+import dev.abgleich.application.reconciliation.port.in.ReconciliationRun;
+import dev.abgleich.application.reconciliation.port.in.ReviewQueueQuery;
+import dev.abgleich.application.statement.ImportedStatement;
+import dev.abgleich.application.statement.StatementReport;
 import dev.abgleich.domain.money.Money;
 import dev.abgleich.domain.statement.Balance;
 import java.time.Instant;
@@ -99,7 +102,7 @@ final class ApiJson {
     record ReviewItemJson(UUID transactionId, String version, String account, LocalDate bookingDate, MoneyJson amount,
             String counterpartyName, String remittanceText, String reference, List<ProposalJson> proposals) {
 
-        static ReviewItemJson of(ReviewQueueQuery.ReviewItem item) {
+        static ReviewItemJson of(ReviewItem item) {
             return new ReviewItemJson(item.transactionId(), ETags.of(item.version()), item.account().value(),
                     item.bookingDate(), MoneyJson.of(item.amount()), item.counterpartyName(), item.remittanceText(),
                     item.reference(), item.proposals().stream().map(ProposalJson::of).toList());
@@ -107,7 +110,7 @@ final class ApiJson {
     }
 
     record ProposalJson(UUID proposalId, String rule, String confidence, String explanation, List<ShareJson> invoices) {
-        static ProposalJson of(ReviewQueueQuery.Proposal proposal) {
+        static ProposalJson of(ReviewItem.Proposal proposal) {
             return new ProposalJson(proposal.groupId(), proposal.rule().name(),
                     proposal.confidence().value().toPlainString(), proposal.explanation(),
                     proposal.shares().stream().map(ShareJson::of).toList());
@@ -116,7 +119,7 @@ final class ApiJson {
 
     record ShareJson(UUID invoiceId, String invoiceNumber, String debtorName, MoneyJson outstanding, MoneyJson allocated,
             MoneyJson chargesWrittenOff, String invoiceStatus, LocalDate dueDate) {
-        static ShareJson of(ReviewQueueQuery.Share share) {
+        static ShareJson of(ReviewItem.Share share) {
             return new ShareJson(share.invoiceId(), share.invoiceNumber(), share.debtorName(),
                     MoneyJson.of(share.outstanding()), MoneyJson.of(share.allocated()),
                     MoneyJson.of(share.chargesWrittenOff()), share.invoiceStatus().name(), share.dueDate());
@@ -132,7 +135,7 @@ final class ApiJson {
     record InvoiceJson(UUID id, String invoiceNumber, String creditorIban, String debtorName, MoneyJson amount,
             MoneyJson paidAmount, MoneyJson outstanding, String status, LocalDate dueDate, String reference,
             String version) {
-        static InvoiceJson of(InvoiceQuery.InvoiceView invoice) {
+        static InvoiceJson of(InvoiceView invoice) {
             return new InvoiceJson(invoice.id(), invoice.number(), invoice.creditorAccount().value(),
                     invoice.debtorName(), MoneyJson.of(invoice.amount()), MoneyJson.of(invoice.paidAmount()),
                     MoneyJson.of(invoice.outstanding()), invoice.status().name(), invoice.dueDate(),
@@ -143,7 +146,7 @@ final class ApiJson {
     record AllocationJson(UUID allocationId, UUID transactionId, LocalDate bookingDate, MoneyJson amount,
             MoneyJson chargesWrittenOff, String rule, String status, String explanation, String decidedBy,
             Instant decidedAt, String decisionNote) {
-        static AllocationJson of(InvoiceQuery.AllocationView allocation) {
+        static AllocationJson of(InvoiceDetail.AllocationView allocation) {
             return new AllocationJson(allocation.allocationId(), allocation.transactionId(), allocation.bookingDate(),
                     MoneyJson.of(allocation.amount()), MoneyJson.of(allocation.chargesWrittenOff()),
                     allocation.rule().name(), allocation.status().name(), allocation.explanation(),
@@ -152,7 +155,7 @@ final class ApiJson {
     }
 
     record InvoiceDetailJson(InvoiceJson invoice, List<AllocationJson> allocations) {
-        static InvoiceDetailJson of(InvoiceQuery.InvoiceDetail detail) {
+        static InvoiceDetailJson of(InvoiceDetail detail) {
             return new InvoiceDetailJson(InvoiceJson.of(detail.invoice()),
                     detail.allocations().stream().map(AllocationJson::of).toList());
         }

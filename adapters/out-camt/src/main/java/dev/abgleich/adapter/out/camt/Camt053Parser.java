@@ -1,8 +1,8 @@
 package dev.abgleich.adapter.out.camt;
 
-import dev.abgleich.application.port.out.ParsedStatementFile;
-import dev.abgleich.application.port.out.StatementParserPort;
-import dev.abgleich.application.port.out.StatementSniff;
+import dev.abgleich.application.statement.port.out.ParsedStatementFile;
+import dev.abgleich.application.statement.port.out.StatementParserPort;
+import dev.abgleich.application.statement.port.out.StatementSniff;
 import java.io.InputStream;
 
 /** ISO 20022 camt.053 bank-to-customer statements, versions 001.04 and 001.08 (Swiss Payment Standards, SEPA). */

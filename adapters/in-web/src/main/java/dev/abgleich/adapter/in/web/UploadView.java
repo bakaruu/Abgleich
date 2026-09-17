@@ -1,12 +1,12 @@
 package dev.abgleich.adapter.in.web;
 
-import dev.abgleich.application.port.in.EnrichedNotification;
-import dev.abgleich.application.port.in.ImportResult;
-import dev.abgleich.application.port.in.ImportedStatement;
-import dev.abgleich.application.port.in.ReconciliationRun;
-import dev.abgleich.application.port.in.StatementProcessed;
-import dev.abgleich.application.port.in.StatementReport;
-import dev.abgleich.application.port.in.StatementReportQuery;
+import dev.abgleich.application.reconciliation.port.in.ReconciliationRun;
+import dev.abgleich.application.statement.EnrichedNotification;
+import dev.abgleich.application.statement.ImportedStatement;
+import dev.abgleich.application.statement.StatementReport;
+import dev.abgleich.application.statement.port.in.ImportResult;
+import dev.abgleich.application.statement.port.in.StatementProcessed;
+import dev.abgleich.application.statement.port.in.StatementReportQuery;
 import dev.abgleich.domain.matching.AllocationStatus;
 import dev.abgleich.domain.money.Direction;
 import java.util.List;

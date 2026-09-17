@@ -1,6 +1,6 @@
 package dev.abgleich.bootstrap.config;
 
-import dev.abgleich.application.port.in.SummaryQuery;
+import dev.abgleich.application.reporting.port.in.SummaryQuery;
 import dev.abgleich.bootstrap.metrics.ReconciliationMetrics;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;

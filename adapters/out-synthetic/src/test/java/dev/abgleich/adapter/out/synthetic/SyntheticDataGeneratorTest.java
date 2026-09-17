@@ -3,8 +3,8 @@ package dev.abgleich.adapter.out.synthetic;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.abgleich.adapter.out.synthetic.SyntheticDataset.Expected;
-import dev.abgleich.application.port.in.RegisterInvoiceCommand;
-import dev.abgleich.application.port.out.ExampleFile;
+import dev.abgleich.application.example.ExampleFile;
+import dev.abgleich.application.invoice.RegisterInvoiceCommand;
 import dev.abgleich.domain.reference.CreditorReference;
 import dev.abgleich.domain.reference.PaymentReference;
 import dev.abgleich.domain.reference.QrReference;

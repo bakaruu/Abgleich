@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.abgleich.adapter.out.kafka.KafkaInvoiceEventPublisher;
 import dev.abgleich.adapter.out.postgres.JdbcOutboxRepository;
-import dev.abgleich.application.port.in.ExampleDataUseCase;
-import dev.abgleich.application.port.in.PublishEventsUseCase;
-import dev.abgleich.application.port.in.PublishEventsUseCase.PublishRun;
-import dev.abgleich.application.service.PublishEventsService;
+import dev.abgleich.application.events.port.in.PublishEventsUseCase;
+import dev.abgleich.application.events.port.in.PublishEventsUseCase.PublishRun;
+import dev.abgleich.application.events.service.PublishEventsService;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;

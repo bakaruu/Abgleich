@@ -1,8 +1,8 @@
 package dev.abgleich.adapter.in.kafka;
 
-import dev.abgleich.application.port.in.InvoiceReceipt;
-import dev.abgleich.application.port.in.MessageChannel;
-import dev.abgleich.application.port.in.ReceiveInvoiceUseCase;
+import dev.abgleich.application.invoice.InvoiceReceipt;
+import dev.abgleich.application.invoice.MessageChannel;
+import dev.abgleich.application.invoice.port.in.ReceiveInvoiceUseCase;
 import dev.abgleich.domain.invoice.InvalidInvoiceException;
 import dev.abgleich.domain.money.CurrencyMismatchException;
 import dev.abgleich.domain.reference.InvalidReferenceException;

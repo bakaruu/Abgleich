@@ -9,9 +9,9 @@ import static dev.abgleich.adapter.out.camt.CamtXml.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
-import dev.abgleich.application.port.out.ParsedStatementFile;
-import dev.abgleich.application.port.out.StatementFormat;
-import dev.abgleich.application.port.out.StatementSniff;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.port.out.ParsedStatementFile;
+import dev.abgleich.application.statement.port.out.StatementSniff;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.money.Direction;
 import dev.abgleich.domain.money.Money;

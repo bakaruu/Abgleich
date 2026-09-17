@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.out.camt;
 
-import dev.abgleich.application.port.out.ParsedStatementFile;
-import dev.abgleich.application.port.out.StatementFormat;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.port.out.ParsedStatementFile;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.money.Direction;
 import dev.abgleich.domain.money.Money;

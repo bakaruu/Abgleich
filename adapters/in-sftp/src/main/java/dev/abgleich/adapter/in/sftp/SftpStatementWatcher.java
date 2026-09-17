@@ -1,10 +1,10 @@
 package dev.abgleich.adapter.in.sftp;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.ImportStatementCommand;
-import dev.abgleich.application.port.in.ProcessStatementUseCase;
-import dev.abgleich.application.port.out.StorageException;
-import dev.abgleich.application.service.ImportStatementService;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.port.in.ImportStatementCommand;
+import dev.abgleich.application.statement.port.in.ImportStatementUseCase;
+import dev.abgleich.application.statement.port.in.ProcessStatementUseCase;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -129,9 +129,9 @@ public class SftpStatementWatcher {
 
     private FileOutcome handle(Session<DirEntry> session, String name, long size) throws IOException {
         String stamped = STAMP.format(clock.instant()) + "-" + name;
-        if (size > ImportStatementService.MAX_FILE_BYTES) {
+        if (size > ImportStatementUseCase.MAX_FILE_BYTES) {
             moveToError(session, name, stamped, "FORBIDDEN_CONTENT: The file is larger than "
-                    + ImportStatementService.MAX_FILE_BYTES / (1024 * 1024) + " MB");
+                    + ImportStatementUseCase.MAX_FILE_BYTES / (1024 * 1024) + " MB");
             return FileOutcome.REJECTED;
         }
         byte[] content = download(session, folders.inbox() + "/" + name);
@@ -175,7 +175,7 @@ public class SftpStatementWatcher {
 
     private static byte[] download(Session<DirEntry> session, String path) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        session.read(path, new BoundedOutputStream(bytes, ImportStatementService.MAX_FILE_BYTES + 1));
+        session.read(path, new BoundedOutputStream(bytes, ImportStatementUseCase.MAX_FILE_BYTES + 1));
         return bytes.toByteArray();
     }
 

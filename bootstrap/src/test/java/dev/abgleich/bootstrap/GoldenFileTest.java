@@ -2,7 +2,7 @@ package dev.abgleich.bootstrap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.abgleich.application.port.in.ExampleDataUseCase;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

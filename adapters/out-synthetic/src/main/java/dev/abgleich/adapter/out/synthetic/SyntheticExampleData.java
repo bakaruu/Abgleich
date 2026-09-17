@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.out.synthetic;
 
-import dev.abgleich.application.port.out.ExampleDataPort;
+import dev.abgleich.application.example.port.out.ExampleDataPort;
 
 /** The example shown in the UI: always the default seed and day, generated once. */
 public final class SyntheticExampleData implements ExampleDataPort {

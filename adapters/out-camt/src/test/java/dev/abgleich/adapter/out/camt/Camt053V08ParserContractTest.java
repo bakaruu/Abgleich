@@ -1,8 +1,8 @@
 package dev.abgleich.adapter.out.camt;
 
-import dev.abgleich.application.port.out.StatementFormat;
-import dev.abgleich.application.port.out.StatementParserContract;
-import dev.abgleich.application.port.out.StatementParserPort;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.port.out.StatementParserContract;
+import dev.abgleich.application.statement.port.out.StatementParserPort;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;

@@ -1,9 +1,9 @@
 package dev.abgleich.adapter.in.rest;
 
-import dev.abgleich.application.port.in.DecisionResult;
-import dev.abgleich.application.port.in.ReviewProposalUseCase;
-import dev.abgleich.application.port.in.ReviewQueueQuery;
-import dev.abgleich.application.port.in.ReviewQueueQuery.ReviewItem;
+import dev.abgleich.application.DecisionResult;
+import dev.abgleich.application.reconciliation.ReviewItem;
+import dev.abgleich.application.reconciliation.port.in.ReviewProposalUseCase;
+import dev.abgleich.application.reconciliation.port.in.ReviewQueueQuery;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;

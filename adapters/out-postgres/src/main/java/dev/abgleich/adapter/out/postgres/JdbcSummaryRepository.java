@@ -1,12 +1,12 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.ReconciliationSummary;
-import dev.abgleich.application.port.in.ReconciliationSummary.ChannelImports;
-import dev.abgleich.application.port.in.ReconciliationSummary.Payments;
-import dev.abgleich.application.port.in.ReconciliationSummary.RuleOutcome;
-import dev.abgleich.application.port.out.StorageException;
-import dev.abgleich.application.port.out.SummaryRepositoryPort;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.reporting.ReconciliationSummary;
+import dev.abgleich.application.reporting.ReconciliationSummary.ChannelImports;
+import dev.abgleich.application.reporting.ReconciliationSummary.Payments;
+import dev.abgleich.application.reporting.ReconciliationSummary.RuleOutcome;
+import dev.abgleich.application.reporting.port.out.SummaryRepositoryPort;
+import dev.abgleich.application.statement.ImportSource;
 import dev.abgleich.domain.matching.Allocation;
 import dev.abgleich.domain.matching.MatchRule;
 import dev.abgleich.domain.money.Money;

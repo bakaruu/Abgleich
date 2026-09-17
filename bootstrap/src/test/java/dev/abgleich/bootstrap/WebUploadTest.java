@@ -3,8 +3,8 @@ package dev.abgleich.bootstrap;
 import static dev.abgleich.bootstrap.Browser.map;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.abgleich.application.port.in.RegisterInvoiceCommand;
-import dev.abgleich.application.port.in.RegisterInvoiceUseCase;
+import dev.abgleich.application.invoice.RegisterInvoiceCommand;
+import dev.abgleich.application.invoice.port.in.RegisterInvoiceUseCase;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.money.Money;

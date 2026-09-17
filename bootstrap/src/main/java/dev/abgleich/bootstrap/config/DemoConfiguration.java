@@ -2,10 +2,10 @@ package dev.abgleich.bootstrap.config;
 
 import dev.abgleich.adapter.in.scheduler.DemoResetJob;
 import dev.abgleich.adapter.out.postgres.JdbcDemoDataRepository;
-import dev.abgleich.application.port.in.ExampleDataUseCase;
-import dev.abgleich.application.port.in.ResetDemoUseCase;
-import dev.abgleich.application.port.out.DemoDataPort;
-import dev.abgleich.application.service.DemoResetService;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
+import dev.abgleich.application.example.port.in.ResetDemoUseCase;
+import dev.abgleich.application.example.port.out.DemoDataPort;
+import dev.abgleich.application.example.service.DemoResetService;
 import dev.abgleich.bootstrap.web.RateLimitFilter;
 import dev.abgleich.bootstrap.web.RequestRateLimiter;
 import java.time.Clock;

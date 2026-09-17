@@ -1,10 +1,10 @@
 package dev.abgleich.adapter.in.web;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.ImportStatementCommand;
-import dev.abgleich.application.port.in.ProcessStatementUseCase;
-import dev.abgleich.application.port.in.StatementProcessed;
-import dev.abgleich.application.port.in.StatementReportQuery;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.port.in.ImportStatementCommand;
+import dev.abgleich.application.statement.port.in.ProcessStatementUseCase;
+import dev.abgleich.application.statement.port.in.StatementProcessed;
+import dev.abgleich.application.statement.port.in.StatementReportQuery;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;

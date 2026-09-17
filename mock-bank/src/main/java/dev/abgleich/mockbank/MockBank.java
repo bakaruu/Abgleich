@@ -3,7 +3,7 @@ package dev.abgleich.mockbank;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.abgleich.adapter.out.synthetic.SyntheticExampleData;
-import dev.abgleich.application.port.out.ExampleFile;
+import dev.abgleich.application.example.ExampleFile;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;

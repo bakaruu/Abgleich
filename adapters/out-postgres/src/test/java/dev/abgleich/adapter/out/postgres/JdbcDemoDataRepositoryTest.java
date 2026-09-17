@@ -2,8 +2,8 @@ package dev.abgleich.adapter.out.postgres;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.abgleich.application.port.in.InvoiceReceipt;
-import dev.abgleich.application.port.in.MessageChannel;
+import dev.abgleich.application.invoice.InvoiceReceipt;
+import dev.abgleich.application.invoice.MessageChannel;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceEvent;

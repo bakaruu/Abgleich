@@ -1,10 +1,10 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.in.InvoiceReceipt;
-import dev.abgleich.application.port.in.InvoiceReceipt.Outcome;
-import dev.abgleich.application.port.in.MessageChannel;
-import dev.abgleich.application.port.out.InboxRepositoryPort;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.invoice.InvoiceReceipt;
+import dev.abgleich.application.invoice.InvoiceReceipt.Outcome;
+import dev.abgleich.application.invoice.MessageChannel;
+import dev.abgleich.application.invoice.port.out.InboxRepositoryPort;
 import dev.abgleich.domain.invoice.Invoice;
 import java.time.Instant;
 import java.time.OffsetDateTime;

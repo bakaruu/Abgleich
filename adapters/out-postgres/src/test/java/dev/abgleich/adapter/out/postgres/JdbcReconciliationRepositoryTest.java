@@ -3,11 +3,11 @@ package dev.abgleich.adapter.out.postgres;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.out.NewStatementImport;
-import dev.abgleich.application.port.out.ReconciliationRepositoryPort.ReversedPayment;
-import dev.abgleich.application.port.out.StaleDataException;
-import dev.abgleich.application.port.out.StatementFormat;
+import dev.abgleich.application.StaleDataException;
+import dev.abgleich.application.reconciliation.port.out.ReconciliationRepositoryPort.ReversedPayment;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.port.out.NewStatementImport;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceEvent;

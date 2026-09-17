@@ -1,9 +1,9 @@
 package dev.abgleich.adapter.in.web;
 
-import dev.abgleich.application.port.in.ExampleDataUseCase;
-import dev.abgleich.application.port.in.ExampleDataUseCase.ExampleLoaded;
-import dev.abgleich.application.port.in.StatementReportQuery;
-import dev.abgleich.application.port.out.ExampleFile;
+import dev.abgleich.application.example.ExampleFile;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase.ExampleLoaded;
+import dev.abgleich.application.statement.port.in.StatementReportQuery;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

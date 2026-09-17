@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.out.camt;
 
-import dev.abgleich.application.port.out.StatementFormat;
+import dev.abgleich.application.statement.StatementFormat;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import dev.abgleich.domain.statement.InvalidStatementException.Reason;
 

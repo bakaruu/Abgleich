@@ -2,10 +2,10 @@ package dev.abgleich.adapter.out.postgres;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.StatementReport;
-import dev.abgleich.application.port.out.NewStatementImport;
-import dev.abgleich.application.port.out.StatementFormat;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.StatementReport;
+import dev.abgleich.application.statement.port.out.NewStatementImport;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceNumber;

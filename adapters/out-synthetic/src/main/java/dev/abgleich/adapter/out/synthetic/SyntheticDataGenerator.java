@@ -2,8 +2,8 @@ package dev.abgleich.adapter.out.synthetic;
 
 import dev.abgleich.adapter.out.synthetic.SyntheticDataset.Expected;
 import dev.abgleich.adapter.out.synthetic.SyntheticDataset.Label;
-import dev.abgleich.application.port.in.RegisterInvoiceCommand;
-import dev.abgleich.application.port.out.ExampleFile;
+import dev.abgleich.application.example.ExampleFile;
+import dev.abgleich.application.invoice.RegisterInvoiceCommand;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.money.Money;

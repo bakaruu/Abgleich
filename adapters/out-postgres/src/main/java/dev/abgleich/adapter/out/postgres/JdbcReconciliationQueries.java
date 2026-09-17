@@ -1,13 +1,13 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.in.InvoiceQuery.AllocationView;
-import dev.abgleich.application.port.in.InvoiceQuery.InvoiceDetail;
-import dev.abgleich.application.port.in.InvoiceQuery.InvoiceView;
-import dev.abgleich.application.port.in.ReviewQueueQuery.Proposal;
-import dev.abgleich.application.port.in.ReviewQueueQuery.ReviewItem;
-import dev.abgleich.application.port.in.ReviewQueueQuery.Share;
-import dev.abgleich.application.port.out.ReconciliationQueriesPort;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.invoice.InvoiceDetail;
+import dev.abgleich.application.invoice.InvoiceDetail.AllocationView;
+import dev.abgleich.application.invoice.InvoiceView;
+import dev.abgleich.application.reconciliation.ReviewItem;
+import dev.abgleich.application.reconciliation.ReviewItem.Proposal;
+import dev.abgleich.application.reconciliation.ReviewItem.Share;
+import dev.abgleich.application.reconciliation.port.out.ReconciliationQueriesPort;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.InvoiceStatus;
 import dev.abgleich.domain.matching.AllocationStatus;

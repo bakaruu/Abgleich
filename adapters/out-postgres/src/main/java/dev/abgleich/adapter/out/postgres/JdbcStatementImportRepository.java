@@ -1,11 +1,11 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.in.EnrichedNotification;
-import dev.abgleich.application.port.in.ImportedStatement;
-import dev.abgleich.application.port.out.DuplicateImportException;
-import dev.abgleich.application.port.out.NewStatementImport;
-import dev.abgleich.application.port.out.StatementImportRepositoryPort;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.statement.EnrichedNotification;
+import dev.abgleich.application.statement.ImportedStatement;
+import dev.abgleich.application.statement.port.out.DuplicateImportException;
+import dev.abgleich.application.statement.port.out.NewStatementImport;
+import dev.abgleich.application.statement.port.out.StatementImportRepositoryPort;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.money.Money;
 import dev.abgleich.domain.statement.Balance;

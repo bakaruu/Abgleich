@@ -1,8 +1,8 @@
 package dev.abgleich.adapter.out.norma43;
 
-import dev.abgleich.application.port.out.ParsedStatementFile;
-import dev.abgleich.application.port.out.StatementParserPort;
-import dev.abgleich.application.port.out.StatementSniff;
+import dev.abgleich.application.statement.port.out.ParsedStatementFile;
+import dev.abgleich.application.statement.port.out.StatementParserPort;
+import dev.abgleich.application.statement.port.out.StatementSniff;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import dev.abgleich.domain.statement.InvalidStatementException.Reason;
 import java.io.IOException;

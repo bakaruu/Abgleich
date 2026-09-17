@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.in.web;
 
-import dev.abgleich.application.port.in.DecisionResult;
+import dev.abgleich.application.DecisionResult;
 import org.springframework.http.HttpStatus;
 
 /** How a decision result is shown: its HTTP status for htmx swaps and its alert style. */

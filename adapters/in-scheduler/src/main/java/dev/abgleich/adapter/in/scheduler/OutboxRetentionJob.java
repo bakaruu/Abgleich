@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.in.scheduler;
 
-import dev.abgleich.application.port.in.PurgePublishedEventsUseCase;
+import dev.abgleich.application.events.port.in.PurgePublishedEventsUseCase;
 import java.util.Objects;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.slf4j.Logger;

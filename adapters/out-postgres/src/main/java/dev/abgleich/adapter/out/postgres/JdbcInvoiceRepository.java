@@ -1,9 +1,9 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.out.DuplicateInvoiceException;
-import dev.abgleich.application.port.out.InvoiceRepositoryPort;
-import dev.abgleich.application.port.out.StaleDataException;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StaleDataException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.invoice.DuplicateInvoiceException;
+import dev.abgleich.application.invoice.port.out.InvoiceRepositoryPort;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceNumber;

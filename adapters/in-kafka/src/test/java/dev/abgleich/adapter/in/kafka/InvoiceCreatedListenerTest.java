@@ -3,9 +3,9 @@ package dev.abgleich.adapter.in.kafka;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import dev.abgleich.application.port.in.InvoiceReceipt;
-import dev.abgleich.application.port.in.MessageChannel;
-import dev.abgleich.application.port.in.RegisterInvoiceCommand;
+import dev.abgleich.application.invoice.InvoiceReceipt;
+import dev.abgleich.application.invoice.MessageChannel;
+import dev.abgleich.application.invoice.RegisterInvoiceCommand;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.InvoiceNumber;
 import dev.abgleich.domain.money.Money;

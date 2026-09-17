@@ -1,8 +1,8 @@
 package dev.abgleich.adapter.in.web;
 
-import dev.abgleich.application.port.in.ExampleDataUseCase;
-import dev.abgleich.application.port.in.ReviewQueueQuery;
-import dev.abgleich.application.port.out.ExampleFile;
+import dev.abgleich.application.example.ExampleFile;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
+import dev.abgleich.application.reconciliation.port.in.ReviewQueueQuery;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.ControllerAdvice;

@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.in.scheduler;
 
-import dev.abgleich.application.port.in.FetchStatementsUseCase;
-import dev.abgleich.application.port.in.FetchStatementsUseCase.AccountFetch;
+import dev.abgleich.application.statement.port.in.FetchStatementsUseCase;
+import dev.abgleich.application.statement.port.in.FetchStatementsUseCase.AccountFetch;
 import java.util.Objects;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.slf4j.Logger;

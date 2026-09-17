@@ -2,10 +2,10 @@ package dev.abgleich.bootstrap.config;
 
 import dev.abgleich.adapter.in.scheduler.StatementFetchJob;
 import dev.abgleich.adapter.out.bankapi.HttpBankStatementClient;
-import dev.abgleich.application.port.in.FetchStatementsUseCase;
-import dev.abgleich.application.port.in.ProcessStatementUseCase;
-import dev.abgleich.application.port.out.BankStatementFetchPort;
-import dev.abgleich.application.service.FetchStatementsService;
+import dev.abgleich.application.statement.port.in.FetchStatementsUseCase;
+import dev.abgleich.application.statement.port.in.ProcessStatementUseCase;
+import dev.abgleich.application.statement.port.out.BankStatementFetchPort;
+import dev.abgleich.application.statement.service.FetchStatementsService;
 import dev.abgleich.domain.account.Iban;
 import java.time.Clock;
 import java.time.Duration;

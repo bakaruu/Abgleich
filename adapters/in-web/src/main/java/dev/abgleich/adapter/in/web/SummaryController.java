@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.in.web;
 
-import dev.abgleich.application.port.in.SummaryQuery;
+import dev.abgleich.application.reporting.port.in.SummaryQuery;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

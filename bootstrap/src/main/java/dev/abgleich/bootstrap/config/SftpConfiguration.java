@@ -2,7 +2,7 @@ package dev.abgleich.bootstrap.config;
 
 import dev.abgleich.adapter.in.sftp.SftpFolders;
 import dev.abgleich.adapter.in.sftp.SftpStatementWatcher;
-import dev.abgleich.application.port.in.ProcessStatementUseCase;
+import dev.abgleich.application.statement.port.in.ProcessStatementUseCase;
 import java.time.Clock;
 import java.time.Duration;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;

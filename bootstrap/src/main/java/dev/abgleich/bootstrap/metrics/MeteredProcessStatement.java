@@ -1,8 +1,8 @@
 package dev.abgleich.bootstrap.metrics;
 
-import dev.abgleich.application.port.in.ImportStatementCommand;
-import dev.abgleich.application.port.in.ProcessStatementUseCase;
-import dev.abgleich.application.port.in.StatementProcessed;
+import dev.abgleich.application.statement.port.in.ImportStatementCommand;
+import dev.abgleich.application.statement.port.in.ProcessStatementUseCase;
+import dev.abgleich.application.statement.port.in.StatementProcessed;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;

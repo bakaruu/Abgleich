@@ -3,7 +3,7 @@ package dev.abgleich.adapter.out.postgres;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import dev.abgleich.application.port.out.OutboxRepositoryPort.PendingEvent;
+import dev.abgleich.application.events.port.out.OutboxRepositoryPort.PendingEvent;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceEvent;

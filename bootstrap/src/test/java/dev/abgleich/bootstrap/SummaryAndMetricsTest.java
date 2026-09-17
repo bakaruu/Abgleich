@@ -2,8 +2,8 @@ package dev.abgleich.bootstrap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.abgleich.application.port.in.ExampleDataUseCase;
-import dev.abgleich.application.port.in.ExampleDataUseCase.ExampleLoaded;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase.ExampleLoaded;
 import java.net.http.HttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

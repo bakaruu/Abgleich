@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.out.StaleDataException;
+import dev.abgleich.application.StaleDataException;
 import dev.abgleich.domain.matching.Allocation;
 import dev.abgleich.domain.matching.AllocationStatus;
 import dev.abgleich.domain.matching.Confidence;

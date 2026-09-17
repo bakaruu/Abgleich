@@ -2,14 +2,14 @@ package dev.abgleich.adapter.out.postgres;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.ReconciliationSummary;
-import dev.abgleich.application.port.in.ReconciliationSummary.ChannelImports;
-import dev.abgleich.application.port.in.ReconciliationSummary.Payments;
-import dev.abgleich.application.port.in.ReconciliationSummary.RuleOutcome;
-import dev.abgleich.application.port.out.NewStatementImport;
-import dev.abgleich.application.port.out.ReviewRepositoryPort.ProposalGroup;
-import dev.abgleich.application.port.out.StatementFormat;
+import dev.abgleich.application.reconciliation.port.out.ReviewRepositoryPort.ProposalGroup;
+import dev.abgleich.application.reporting.ReconciliationSummary;
+import dev.abgleich.application.reporting.ReconciliationSummary.ChannelImports;
+import dev.abgleich.application.reporting.ReconciliationSummary.Payments;
+import dev.abgleich.application.reporting.ReconciliationSummary.RuleOutcome;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.port.out.NewStatementImport;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceEvent;

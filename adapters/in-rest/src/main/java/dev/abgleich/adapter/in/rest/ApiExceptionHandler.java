@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.in.rest;
 
-import dev.abgleich.application.port.out.DuplicateInvoiceException;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.invoice.DuplicateInvoiceException;
 import dev.abgleich.domain.invoice.InvalidInvoiceException;
 import dev.abgleich.domain.reference.InvalidReferenceException;
 import dev.abgleich.domain.statement.InvalidStatementException;

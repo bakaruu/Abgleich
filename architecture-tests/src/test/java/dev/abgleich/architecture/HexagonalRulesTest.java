@@ -21,6 +21,10 @@ import org.junit.jupiter.api.Test;
 
 class HexagonalRulesTest {
 
+    private static final String PORT_IN = "dev.abgleich.application.*.port.in..";
+    private static final String PORT_OUT = "dev.abgleich.application.*.port.out..";
+    private static final String SERVICES = "dev.abgleich.application.*.service..";
+
     /**
      * Rules with allowEmptyShould pass on missing code. If a package is lost (an ignore pattern once
      * hid every "out" package from git), the build must fail instead of turning green on nothing.
@@ -32,9 +36,30 @@ class HexagonalRulesTest {
                 "dev.abgleich.domain.invoice",
                 "dev.abgleich.domain.matching",
                 "dev.abgleich.domain.matching.text",
-                "dev.abgleich.application.port.in",
-                "dev.abgleich.application.port.out",
-                "dev.abgleich.application.service",
+                "dev.abgleich.application",
+                "dev.abgleich.application.statement",
+                "dev.abgleich.application.statement.port.in",
+                "dev.abgleich.application.statement.port.out",
+                "dev.abgleich.application.statement.service",
+                "dev.abgleich.application.invoice",
+                "dev.abgleich.application.invoice.port.in",
+                "dev.abgleich.application.invoice.port.out",
+                "dev.abgleich.application.invoice.service",
+                "dev.abgleich.application.reconciliation",
+                "dev.abgleich.application.reconciliation.port.in",
+                "dev.abgleich.application.reconciliation.port.out",
+                "dev.abgleich.application.reconciliation.service",
+                "dev.abgleich.application.events.port.in",
+                "dev.abgleich.application.events.port.out",
+                "dev.abgleich.application.events.service",
+                "dev.abgleich.application.reporting",
+                "dev.abgleich.application.reporting.port.in",
+                "dev.abgleich.application.reporting.port.out",
+                "dev.abgleich.application.reporting.service",
+                "dev.abgleich.application.example",
+                "dev.abgleich.application.example.port.in",
+                "dev.abgleich.application.example.port.out",
+                "dev.abgleich.application.example.service",
                 "dev.abgleich.adapter.in.kafka",
                 "dev.abgleich.adapter.in.rest",
                 "dev.abgleich.adapter.in.scheduler",
@@ -69,6 +94,37 @@ class HexagonalRulesTest {
         noClasses().that().resideInAPackage(APPLICATION)
                 .should().dependOnClassesThat().resideInAnyPackage(ADAPTERS, BOOTSTRAP)
                 .allowEmptyShould(true)
+                .check(ALL);
+    }
+
+    /**
+     * Driving and driven ports meet only inside a service. A use case that mentions a repository type leaks storage
+     * into every adapter that calls it; a repository that mentions a use case type makes storage depend on callers.
+     */
+    @Test
+    void driving_and_driven_ports_do_not_know_each_other() {
+        noClasses().that().resideInAPackage(PORT_IN)
+                .should().dependOnClassesThat().resideInAPackage(PORT_OUT)
+                .check(ALL);
+        noClasses().that().resideInAPackage(PORT_OUT)
+                .should().dependOnClassesThat().resideInAPackage(PORT_IN)
+                .check(ALL);
+    }
+
+    /** Adapters talk to ports; which service implements them is decided by the bootstrap wiring alone. */
+    @Test
+    void only_bootstrap_knows_the_services() {
+        noClasses().that().resideOutsideOfPackages(SERVICES, BOOTSTRAP)
+                .should().dependOnClassesThat().resideInAPackage(SERVICES)
+                .check(ALL);
+    }
+
+    /** Types shared by a capability (commands, results, views) are plain data: they never reach for ports or services. */
+    @Test
+    void shared_application_types_depend_on_no_port_or_service() {
+        noClasses().that().resideInAPackage(APPLICATION)
+                .and().resideOutsideOfPackages(PORT_IN, PORT_OUT, SERVICES)
+                .should().dependOnClassesThat().resideInAnyPackage(PORT_IN, PORT_OUT, SERVICES)
                 .check(ALL);
     }
 

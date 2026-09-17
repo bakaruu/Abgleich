@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.in.kafka;
 
-import dev.abgleich.application.port.in.RegisterInvoiceCommand;
+import dev.abgleich.application.invoice.RegisterInvoiceCommand;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.InvalidInvoiceException;
 import dev.abgleich.domain.invoice.InvoiceNumber;

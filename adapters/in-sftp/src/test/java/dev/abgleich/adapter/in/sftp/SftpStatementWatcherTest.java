@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.abgleich.adapter.in.sftp.SftpStatementWatcher.PollResult;
-import dev.abgleich.application.port.in.ImportResult;
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.ProcessStatementUseCase;
-import dev.abgleich.application.port.in.StatementProcessed;
-import dev.abgleich.application.port.out.StatementFormat;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.port.in.ImportResult;
+import dev.abgleich.application.statement.port.in.ProcessStatementUseCase;
+import dev.abgleich.application.statement.port.in.StatementProcessed;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import java.io.IOException;
 import java.io.InputStream;

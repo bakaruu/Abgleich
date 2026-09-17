@@ -95,7 +95,7 @@ amounts, double confirmations and stale writes are refused by constraints and ve
 | Module | Responsibility |
 |--------|----------------|
 | `domain` | Pure Java model: `Money`, references, IBAN, statements, invoices, events, matching rules |
-| `application` | Use cases and ports; parser contract suite in test fixtures |
+| `application` | Use cases and ports grouped by capability (statement, invoice, reconciliation, events, reporting, example); parser contract suite in test fixtures |
 | `adapters/in-web` | Upload, review, invoice and summary screens (Thymeleaf + htmx) |
 | `adapters/in-rest` | JSON API with Problem Details, `If-Match` and `Idempotency-Key` |
 | `adapters/in-kafka` | `InvoiceCreated` consumer with a dead letter topic |

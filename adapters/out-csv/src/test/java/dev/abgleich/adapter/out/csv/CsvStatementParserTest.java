@@ -3,7 +3,7 @@ package dev.abgleich.adapter.out.csv;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
-import dev.abgleich.application.port.out.ParsedStatementFile;
+import dev.abgleich.application.statement.port.out.ParsedStatementFile;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.money.Direction;
 import dev.abgleich.domain.money.Money;

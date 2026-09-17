@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.in.scheduler;
 
-import dev.abgleich.application.port.in.ResetDemoUseCase;
-import dev.abgleich.application.port.in.ResetDemoUseCase.DemoReset;
+import dev.abgleich.application.example.port.in.ResetDemoUseCase;
+import dev.abgleich.application.example.port.in.ResetDemoUseCase.DemoReset;
 import java.util.Objects;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.slf4j.Logger;

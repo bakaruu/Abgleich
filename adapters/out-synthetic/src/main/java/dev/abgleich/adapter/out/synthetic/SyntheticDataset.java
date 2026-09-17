@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.out.synthetic;
 
-import dev.abgleich.application.port.in.RegisterInvoiceCommand;
-import dev.abgleich.application.port.out.ExampleFile;
+import dev.abgleich.application.example.ExampleFile;
+import dev.abgleich.application.invoice.RegisterInvoiceCommand;
 import java.util.List;
 import java.util.Objects;
 

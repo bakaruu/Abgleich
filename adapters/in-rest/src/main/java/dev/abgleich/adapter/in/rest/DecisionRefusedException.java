@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.in.rest;
 
-import dev.abgleich.application.port.in.DecisionResult;
+import dev.abgleich.application.DecisionResult;
 
 /** A decision that was not stored, turned into a Problem Detail by {@link ApiExceptionHandler}. */
 final class DecisionRefusedException extends RuntimeException {

@@ -6,7 +6,7 @@ import dev.abgleich.adapter.in.scheduler.OutboxRelayJob;
 import dev.abgleich.adapter.in.scheduler.StatementFetchJob;
 import dev.abgleich.adapter.in.sftp.EmbeddedSftpServer;
 import dev.abgleich.adapter.in.sftp.SftpStatementWatcher;
-import dev.abgleich.application.port.in.ExampleDataUseCase;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
 import dev.abgleich.mockbank.MockBank;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

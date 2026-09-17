@@ -3,7 +3,7 @@ package dev.abgleich.adapter.out.kafka;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import dev.abgleich.application.port.out.EventPublishingException;
+import dev.abgleich.application.events.port.out.EventPublishingException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.invoice.Invoice;
 import dev.abgleich.domain.invoice.InvoiceEvent;

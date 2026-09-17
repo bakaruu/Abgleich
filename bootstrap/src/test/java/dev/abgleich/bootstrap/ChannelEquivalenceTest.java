@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.abgleich.adapter.in.sftp.EmbeddedSftpServer;
 import dev.abgleich.adapter.in.sftp.SftpStatementWatcher;
-import dev.abgleich.application.port.in.FetchStatementsUseCase;
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.RegisterInvoiceUseCase;
-import dev.abgleich.application.port.out.ExampleDataPort;
-import dev.abgleich.application.port.out.ExampleFile;
+import dev.abgleich.application.example.ExampleFile;
+import dev.abgleich.application.example.port.out.ExampleDataPort;
+import dev.abgleich.application.invoice.port.in.RegisterInvoiceUseCase;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.port.in.FetchStatementsUseCase;
 import dev.abgleich.mockbank.MockBank;
 import java.io.IOException;
 import java.io.UncheckedIOException;

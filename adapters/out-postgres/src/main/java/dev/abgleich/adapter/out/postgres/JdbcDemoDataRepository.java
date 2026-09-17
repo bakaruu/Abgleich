@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.out.DemoDataPort;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.example.port.out.DemoDataPort;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;

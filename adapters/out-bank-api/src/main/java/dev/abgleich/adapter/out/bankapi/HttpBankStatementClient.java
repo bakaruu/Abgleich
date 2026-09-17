@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.out.bankapi;
 
-import dev.abgleich.application.port.out.BankStatementFetchPort;
-import dev.abgleich.application.port.out.BankUnavailableException;
+import dev.abgleich.application.statement.port.out.BankStatementFetchPort;
+import dev.abgleich.application.statement.port.out.BankUnavailableException;
 import dev.abgleich.domain.account.Iban;
 import java.io.InputStream;
 import java.net.http.HttpClient;

@@ -3,8 +3,8 @@ package dev.abgleich.adapter.out.bankapi;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import dev.abgleich.application.port.out.BankStatementFetchPort.RemoteStatement;
-import dev.abgleich.application.port.out.BankUnavailableException;
+import dev.abgleich.application.statement.port.out.BankStatementFetchPort.RemoteStatement;
+import dev.abgleich.application.statement.port.out.BankUnavailableException;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.mockbank.MockBank;
 import java.io.IOException;

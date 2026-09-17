@@ -1,7 +1,7 @@
 package dev.abgleich.adapter.out.kafka;
 
-import dev.abgleich.application.port.out.EventPublisherPort;
-import dev.abgleich.application.port.out.EventPublishingException;
+import dev.abgleich.application.events.port.out.EventPublisherPort;
+import dev.abgleich.application.events.port.out.EventPublishingException;
 import dev.abgleich.domain.invoice.InvoiceEvent;
 import dev.abgleich.domain.invoice.InvoiceEvent.InvoicePaid;
 import dev.abgleich.domain.invoice.InvoiceEvent.InvoiceReopened;

@@ -1,6 +1,6 @@
 package dev.abgleich.adapter.out.camt;
 
-import dev.abgleich.application.port.out.ParsedStatementFile;
+import dev.abgleich.application.statement.port.out.ParsedStatementFile;
 import dev.abgleich.domain.statement.InvalidStatementException;
 import dev.abgleich.domain.statement.InvalidStatementException.Reason;
 import java.io.FilterInputStream;

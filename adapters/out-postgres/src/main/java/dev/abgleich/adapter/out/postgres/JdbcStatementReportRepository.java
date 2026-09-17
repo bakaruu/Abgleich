@@ -1,10 +1,10 @@
 package dev.abgleich.adapter.out.postgres;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.StatementReport;
-import dev.abgleich.application.port.out.StatementFormat;
-import dev.abgleich.application.port.out.StatementReportRepositoryPort;
-import dev.abgleich.application.port.out.StorageException;
+import dev.abgleich.application.StorageException;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.StatementReport;
+import dev.abgleich.application.statement.port.out.StatementReportRepositoryPort;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.matching.AllocationStatus;
 import dev.abgleich.domain.matching.MatchRule;

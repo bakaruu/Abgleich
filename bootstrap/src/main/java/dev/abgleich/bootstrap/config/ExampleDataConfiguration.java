@@ -1,11 +1,11 @@
 package dev.abgleich.bootstrap.config;
 
 import dev.abgleich.adapter.out.synthetic.SyntheticExampleData;
-import dev.abgleich.application.port.in.ExampleDataUseCase;
-import dev.abgleich.application.port.in.ProcessStatementUseCase;
-import dev.abgleich.application.port.in.RegisterInvoiceUseCase;
-import dev.abgleich.application.port.out.ExampleDataPort;
-import dev.abgleich.application.service.ExampleDataService;
+import dev.abgleich.application.example.port.in.ExampleDataUseCase;
+import dev.abgleich.application.example.port.out.ExampleDataPort;
+import dev.abgleich.application.example.service.ExampleDataService;
+import dev.abgleich.application.invoice.port.in.RegisterInvoiceUseCase;
+import dev.abgleich.application.statement.port.in.ProcessStatementUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

@@ -1,8 +1,8 @@
 package dev.abgleich.adapter.in.rest;
 
 import dev.abgleich.adapter.in.rest.ApiJson.MoneyJson;
-import dev.abgleich.application.port.in.ReconciliationSummary;
-import dev.abgleich.application.port.in.SummaryQuery;
+import dev.abgleich.application.reporting.ReconciliationSummary;
+import dev.abgleich.application.reporting.port.in.SummaryQuery;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;

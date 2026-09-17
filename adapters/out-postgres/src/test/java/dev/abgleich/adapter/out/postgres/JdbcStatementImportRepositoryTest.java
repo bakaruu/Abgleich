@@ -1,13 +1,14 @@
 package dev.abgleich.adapter.out.postgres;
 
+import dev.abgleich.application.statement.EnrichedNotification;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import dev.abgleich.application.port.in.ImportSource;
-import dev.abgleich.application.port.in.ImportedStatement;
-import dev.abgleich.application.port.out.DuplicateImportException;
-import dev.abgleich.application.port.out.NewStatementImport;
-import dev.abgleich.application.port.out.StatementFormat;
+import dev.abgleich.application.statement.ImportSource;
+import dev.abgleich.application.statement.ImportedStatement;
+import dev.abgleich.application.statement.StatementFormat;
+import dev.abgleich.application.statement.port.out.DuplicateImportException;
+import dev.abgleich.application.statement.port.out.NewStatementImport;
 import dev.abgleich.domain.account.Iban;
 import dev.abgleich.domain.money.Direction;
 import dev.abgleich.domain.money.Money;
@@ -162,8 +163,8 @@ class JdbcStatementImportRepositoryTest {
                         new StatementEntry(Money.chf("5.00"), Direction.DEBIT, SEP_15, null, "BNK-UNKNOWN", false,
                                 List.of())));
 
-        List<dev.abgleich.application.port.in.EnrichedNotification> result = repository.enrich(List.of(notification));
-        List<dev.abgleich.application.port.in.EnrichedNotification> again = repository.enrich(List.of(notification));
+        List<dev.abgleich.application.statement.EnrichedNotification> result = repository.enrich(List.of(notification));
+        List<dev.abgleich.application.statement.EnrichedNotification> again = repository.enrich(List.of(notification));
 
         assertThat(result).singleElement().satisfies(enriched -> {
             assertThat(enriched.enriched()).isEqualTo(1);
