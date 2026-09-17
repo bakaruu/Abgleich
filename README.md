@@ -147,3 +147,7 @@ The whole public demo (Caddy, Prometheus, Grafana, nightly reset, rate limit) ru
 Not included, on purpose: real bank connections (EBICS, PSD2), outgoing payments (pain.001, Norma 34), full
 accounting or several companies, currency conversion, and user accounts. Decisions are recorded with the channel
 that made them, not with a signed-in person; the public demo is open by design and resets every night.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
