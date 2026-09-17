@@ -58,7 +58,7 @@ class DemoConfiguration {
                 @Value("${abgleich.rate-limit.max-tracked-clients:10000}") int maxTrackedClients, Clock clock) {
             FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(
                     new RateLimitFilter(new RequestRateLimiter(changesPerWindow, window, clock, maxTrackedClients)));
-            registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+            registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
             registration.addUrlPatterns("/*");
             return registration;
         }

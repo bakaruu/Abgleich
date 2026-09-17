@@ -27,6 +27,10 @@ catalogue of 45 known failure modes, each one pinned by a test.**
 - **Reports** what was settled automatically, what waits for people, the unidentified money per currency and how
   often reviewers agree with each rule, on a Summary screen, through the API and as Prometheus metrics with a
   Grafana dashboard.
+- **Explains itself afterwards**: every request, dropped file, message and scheduled run carries one correlation id
+  through its JSON logs and back in the `X-Correlation-Id` response header, and every imported file logs one line
+  with its import id, counts and outcome — ids and numbers only, never anything the bank file says about people
+  ([ADR 0012](docs/adr/0012-one-correlation-id-per-unit-of-work.md)).
 
 ## Measured, not claimed
 
@@ -46,6 +50,22 @@ references and real ties. The build fails on any wrong automatic confirmation.
 Wrong automatic confirmations: **0**. Proposals for payments without an invoice: **0**. The dataset is written
 together with the rules, so these figures are an upper bound; real bank files will find cases it lacks, and each
 one becomes a new labelled case ([ADR 0006](docs/adr/0006-matching-rules-and-review.md)).
+
+### And the tests are measured too
+
+A green suite only proves the tests ran. `./gradlew :domain:pitest` changes the domain on purpose — inverting
+conditions, moving thresholds one step, returning constants — and reports how much of that the tests notice.
+
+| | |
+|---|---|
+| Mutations of the domain | 497 |
+| Killed by the tests | **88 %** |
+| Test strength (of the mutations the tests reach) | 91 % |
+| The build fails below | 85 % |
+
+It was 86 % when first measured, and the survivors were worth reading: every threshold in the matching rules was
+tested comfortably on one side of it, so moving the boundary by one cent, one day or one character broke nothing
+the tests could see. `MatchingBoundariesTest` now sits exactly on each of them. CI runs this on every push.
 
 ## Edge cases handled
 
@@ -138,6 +158,7 @@ Requirements: JDK 21 and Docker.
 ```bash
 ./gradlew build              # compile and all tests (Testcontainers starts PostgreSQL and Kafka)
 ./gradlew evaluateMatching   # precision per matching rule over 300 labelled payments
+./gradlew :domain:pitest    # mutation testing: do the tests notice when a rule changes?
 docker compose up -d         # PostgreSQL, Kafka and an SFTP drop, all named abgleich-*-local-*
 ./gradlew :bootstrap:bootRun
 ```

@@ -12,6 +12,7 @@ import dev.abgleich.application.statement.port.in.StatementReportQuery;
 import dev.abgleich.application.statement.port.out.StatementReportRepositoryPort;
 import dev.abgleich.application.statement.service.ProcessStatementService;
 import dev.abgleich.application.statement.service.StatementReportService;
+import dev.abgleich.bootstrap.metrics.LoggedProcessStatement;
 import dev.abgleich.bootstrap.metrics.MeteredProcessStatement;
 import io.micrometer.core.instrument.MeterRegistry;
 import javax.sql.DataSource;
@@ -24,11 +25,15 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Configuration(proxyBeanMethods = false)
 class StatementProcessingConfiguration {
 
-    /** Every channel (web, REST, SFTP, bank API, example) goes through this one bean, so all are counted. */
+    /**
+     * Every channel (web, REST, SFTP, bank API, example) goes through this one bean, so all are counted and all
+     * are logged the same way.
+     */
     @Bean
     ProcessStatementUseCase processStatementUseCase(ImportStatementUseCase importStatement, ReconcileUseCase reconcile,
             MeterRegistry registry) {
-        return new MeteredProcessStatement(new ProcessStatementService(importStatement, reconcile), registry);
+        ProcessStatementUseCase service = new ProcessStatementService(importStatement, reconcile);
+        return new LoggedProcessStatement(new MeteredProcessStatement(service, registry));
     }
 
     @Bean

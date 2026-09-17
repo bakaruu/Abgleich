@@ -28,12 +28,14 @@ public class OutboxRelayJob {
     @Scheduled(fixedDelayString = "${abgleich.outbox.relay-interval}")
     @SchedulerLock(name = LOCK, lockAtMostFor = "${abgleich.outbox.lock-at-most-for:PT5M}")
     public void run() {
-        PublishRun run = publishEvents.publishPending();
-        if (run.failed() > 0) {
-            log.warn("Outbox relay: {} published, publishing failed, {} events pending", run.published(),
-                    run.stillPending());
-        } else if (run.published() > 0) {
-            log.info("Outbox relay: {} published, {} events pending", run.published(), run.stillPending());
-        }
+        CorrelatedRun.withId("outbox-relay", () -> {
+            PublishRun run = publishEvents.publishPending();
+            if (run.failed() > 0) {
+                log.warn("Outbox relay: {} published, publishing failed, {} events pending", run.published(),
+                        run.stillPending());
+            } else if (run.published() > 0) {
+                log.info("Outbox relay: {} published, {} events pending", run.published(), run.stillPending());
+            }
+        });
     }
 }

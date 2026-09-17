@@ -8,6 +8,9 @@ shedlock = "7.10.1"
 # Same version spring-integration-sftp uses; tests start an embedded SFTP server with it.
 sshd = "2.18.0"
 playwright = "1.63.0"
+# Mutation testing of the domain and the use cases: are the tests able to notice a change in behaviour?
+pitest-plugin = "1.19.0"
+pitest = "1.30.0"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -33,3 +36,4 @@ testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+pitest = { id = "info.solidsoft.pitest", version.ref = "pitest-plugin" }

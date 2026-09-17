@@ -35,17 +35,21 @@ public class DemoResetJob {
     @Scheduled(cron = "${abgleich.demo.reset-cron}", zone = "UTC")
     @SchedulerLock(name = NIGHTLY_LOCK, lockAtMostFor = "PT30M", lockAtLeastFor = "PT5M")
     public void resetNightly() {
-        DemoReset reset = resetDemo.reset();
-        log.info("Demo reset: {} MB deleted, {} example invoices loaded", reset.bytesBefore() / (1024 * 1024),
-                reset.seeded().invoicesRegistered());
+        CorrelatedRun.withId("demo-reset", () -> {
+            DemoReset reset = resetDemo.reset();
+            log.info("Demo reset: {} MB deleted, {} example invoices loaded", reset.bytesBefore() / (1024 * 1024),
+                    reset.seeded().invoicesRegistered());
+        });
     }
 
     @Scheduled(fixedDelayString = "${abgleich.demo.quota-check-interval}",
             initialDelayString = "${abgleich.demo.quota-check-interval}")
     @SchedulerLock(name = QUOTA_LOCK, lockAtMostFor = "PT30M")
     public void resetIfOverQuota() {
-        resetDemo.resetIfLargerThan(maxBytes).ifPresent(reset -> log.warn(
-                "Demo data reached {} MB, over the quota of {} MB: reset", reset.bytesBefore() / (1024 * 1024),
-                maxBytes / (1024 * 1024)));
+        CorrelatedRun.withId("demo-quota", () -> {
+            resetDemo.resetIfLargerThan(maxBytes).ifPresent(reset -> log.warn(
+                    "Demo data reached {} MB, over the quota of {} MB: reset", reset.bytesBefore() / (1024 * 1024),
+                    maxBytes / (1024 * 1024)));
+        });
     }
 }

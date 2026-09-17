@@ -19,11 +19,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.sshd.sftp.client.SftpClient.DirEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.integration.file.remote.session.Session;
 import org.springframework.integration.file.remote.session.SessionFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -54,6 +56,9 @@ public class SftpStatementWatcher {
     private static final DateTimeFormatter STAMP =
             DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssSSS'Z'").withZone(ZoneOffset.UTC);
     private static final Logger log = LoggerFactory.getLogger(SftpStatementWatcher.class);
+
+    /** Same key the web filter uses; adapters share no code, so each entry point sets it for itself. */
+    private static final String CORRELATION_ID = "correlation.id";
 
     private final SessionFactory<DirEntry> sessions;
     private final SftpFolders folders;
@@ -127,7 +132,17 @@ public class SftpStatementWatcher {
         }
     }
 
+    /** One id per file, so every line about it — rejection, storage failure, the import itself — carries the same id. */
     private FileOutcome handle(Session<DirEntry> session, String name, long size) throws IOException {
+        MDC.put(CORRELATION_ID, "sftp-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8));
+        try {
+            return handleFile(session, name, size);
+        } finally {
+            MDC.remove(CORRELATION_ID);
+        }
+    }
+
+    private FileOutcome handleFile(Session<DirEntry> session, String name, long size) throws IOException {
         String stamped = STAMP.format(clock.instant()) + "-" + name;
         if (size > ImportStatementUseCase.MAX_FILE_BYTES) {
             moveToError(session, name, stamped, "FORBIDDEN_CONTENT: The file is larger than "

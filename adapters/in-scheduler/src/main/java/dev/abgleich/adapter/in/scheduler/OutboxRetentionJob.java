@@ -26,9 +26,11 @@ public class OutboxRetentionJob {
     @Scheduled(cron = "${abgleich.outbox.retention-cron}", zone = "UTC")
     @SchedulerLock(name = LOCK, lockAtMostFor = "PT30M")
     public void run() {
-        int deleted = purgePublishedEvents.purgePublished();
-        if (deleted > 0) {
-            log.info("Outbox retention: {} published events deleted", deleted);
-        }
+        CorrelatedRun.withId("outbox-retention", () -> {
+            int deleted = purgePublishedEvents.purgePublished();
+            if (deleted > 0) {
+                log.info("Outbox retention: {} published events deleted", deleted);
+            }
+        });
     }
 }

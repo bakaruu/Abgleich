@@ -3,6 +3,7 @@
 plugins {
     id("abgleich.java-conventions")
     `java-test-fixtures`
+    alias(libs.plugins.pitest)
 }
 
 dependencies {
@@ -12,4 +13,14 @@ dependencies {
     testFixturesApi(libs.junit.jupiter)
     testFixturesApi(libs.assertj.core)
     testFixturesApi(libs.jqwik)
+}
+
+// Mutation testing: ./gradlew :application:pitest breaks the use cases on purpose and fails if no test notices.
+pitest {
+    pitestVersion = libs.versions.pitest.asProvider().get()
+    junit5PluginVersion = "1.2.1"
+    targetClasses = listOf("dev.abgleich.application.*")
+    threads = 4
+    timestampedReports = false
+    outputFormats = listOf("HTML", "XML")
 }

@@ -30,13 +30,15 @@ public class StatementFetchJob {
     @SchedulerLock(name = LOCK, lockAtMostFor = "${abgleich.bank-api.lock-at-most-for:PT30M}",
             lockAtLeastFor = "${abgleich.bank-api.lock-at-least-for:PT30S}")
     public void run() {
-        for (AccountFetch account : fetchStatements.fetchLatest().accounts()) {
-            if (account.bankUnavailable()) {
-                log.warn("Bank API unavailable for account {}; trying again at the next run", account.account());
-            } else if (account.imported() + account.rejected() > 0) {
-                log.info("Bank API account {}: {} imported, {} already imported, {} rejected", account.account(),
-                        account.imported(), account.alreadyImported(), account.rejected());
+        CorrelatedRun.withId("bank-fetch", () -> {
+            for (AccountFetch account : fetchStatements.fetchLatest().accounts()) {
+                if (account.bankUnavailable()) {
+                    log.warn("Bank API unavailable for account {}; trying again at the next run", account.account());
+                } else if (account.imported() + account.rejected() > 0) {
+                    log.info("Bank API account {}: {} imported, {} already imported, {} rejected", account.account(),
+                            account.imported(), account.alreadyImported(), account.rejected());
+                }
             }
-        }
+        });
     }
 }
