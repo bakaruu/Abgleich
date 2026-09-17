@@ -64,33 +64,51 @@ that [the catalogue](docs/bug-catalogue.md) and the tests agree. A few of them:
 
 ## Architecture
 
+Everything points inwards. The adapters on the left start the work, the core decides, and the adapters on the
+right are reached only through ports the core defines.
+
 ```mermaid
 flowchart LR
-    subgraph in[Driving adapters]
-        web[Web UI · htmx]
-        rest[REST API]
-        sftp[SFTP drop]
-        kin[Kafka consumer]
-        sched[Scheduler · ShedLock]
+    subgraph in["Driving adapters"]
+        direction TB
+        web["Web UI · htmx"] ~~~ rest["REST API"] ~~~ sftp["SFTP drop"] ~~~ kin["Kafka consumer"] ~~~ sched["Scheduler"]
     end
-    subgraph core[Core]
-        app[Application<br/>use cases and ports]
-        domain[Domain<br/>Money · Invoice · Matcher]
+
+    subgraph core["The hexagon · plain Java"]
+        direction TB
+        app["<b>application</b><br/>use cases and ports"] --> dom["<b>domain</b><br/>Money · Invoice · Matcher"]
     end
-    subgraph out[Driven adapters]
-        parsers[camt · Norma 43 · CSV]
-        pg[(PostgreSQL)]
-        kout[Outbox relay → Kafka]
-        bank[Bank API client]
+
+    subgraph out["Driven adapters"]
+        direction TB
+        parse["Parsers · camt · Norma 43 · CSV"] ~~~ pg[("PostgreSQL")] ~~~ kout["Outbox relay → Kafka"] ~~~ bank["Bank API client"]
     end
-    web & rest & sftp & kin & sched --> app
-    app --> domain
-    app --> parsers & pg & kout & bank
+
+    in ==>|"call use cases"| core
+    core ==>|"call ports"| out
 ```
 
-The domain knows nothing about Spring, PostgreSQL, Kafka, XML or HTML. Adapters never depend on each other, and
-ArchUnit fails the build when they do. The database is the last line of defence: duplicate imports, unsigned
-amounts, double confirmations and stale writes are refused by constraints and version checks, not only by code.
+The domain knows nothing about Spring, PostgreSQL, Kafka, XML or HTML, adapters never depend on each other, and
+ArchUnit fails the build when either rule is broken. Swapping PostgreSQL for a map in a test, or adding a fifth way
+to receive a statement, changes nothing in the middle column.
+
+### What happens to a statement
+
+```mermaid
+flowchart TD
+    file["A bank file arrives<br/>upload · REST · SFTP · bank API"] --> detect["Detect the format<br/>from the first bytes, not the file name"]
+    detect --> valid["Check the balances<br/>opening + credits − debits = closing"]
+    valid --> store["Store the transactions<br/>a duplicate file is refused by the database"]
+    store --> match["Match each payment<br/>rules R1 to R6"]
+    match -->|"R1 and a single candidate"| settled["The invoice is settled<br/>and the allocation recorded"]
+    match -->|"anything else"| review["Review queue<br/>with the rule, its confidence and a reason"]
+    review -->|"a person confirms"| settled
+    settled --> event["InvoicePaid leaves through<br/>the outbox to Kafka"]
+```
+
+Each step refuses bad input before the next one runs, and the database is the last line of defence: duplicate
+imports, unsigned amounts, double confirmations and stale writes are rejected by constraints and version checks,
+not only by code.
 
 | Module | Responsibility |
 |--------|----------------|
