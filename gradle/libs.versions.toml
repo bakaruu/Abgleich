@@ -7,6 +7,7 @@ commons-csv = "1.14.0"
 shedlock = "7.10.1"
 # Same version spring-integration-sftp uses; tests start an embedded SFTP server with it.
 sshd = "2.18.0"
+playwright = "1.63.0"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -24,6 +25,7 @@ htmx = { module = "org.webjars.npm:htmx.org", version.ref = "htmx" }
 shedlock-spring = { module = "net.javacrumbs.shedlock:shedlock-spring", version.ref = "shedlock" }
 shedlock-provider-jdbc = { module = "net.javacrumbs.shedlock:shedlock-provider-jdbc-template", version.ref = "shedlock" }
 sshd-sftp = { module = "org.apache.sshd:sshd-sftp", version.ref = "sshd" }
+playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }

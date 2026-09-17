@@ -67,6 +67,23 @@ class JdbcOutboxRepositoryTest {
     }
 
     @Test
+    void B23_retention_deletes_old_published_events_and_never_unpublished_ones() {
+        InvoiceEvent oldPublished = storePaid("F-2026-0141");
+        InvoiceEvent recentPublished = storePaid("F-2026-0142");
+        InvoiceEvent oldUnpublished = storePaid("F-2026-0143");
+        outbox.markPublished(oldPublished.eventId(), NOW.minusSeconds(40 * 86_400));
+        outbox.markPublished(recentPublished.eventId(), NOW.minusSeconds(86_400));
+        jdbc.update("update outbox_event set occurred_at = occurred_at - interval '90 days' where id = ?",
+                oldUnpublished.eventId());
+
+        int deleted = outbox.deletePublishedBefore(NOW.minusSeconds(30 * 86_400));
+
+        assertThat(deleted).isEqualTo(1);
+        assertThat(jdbc.queryForList("select invoice_number from outbox_event order by invoice_number", String.class))
+                .containsExactly("F-2026-0142", "F-2026-0143");
+    }
+
+    @Test
     void B23_the_database_refuses_an_event_that_contradicts_the_invoice_status() {
         InvoiceEvent paid = storePaid("F-2026-0142");
 

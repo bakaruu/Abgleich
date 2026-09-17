@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
  */
 public final class ReviewService implements ReviewProposalUseCase {
 
-    static final String SUPERSEDED = "Another proposal for this payment was confirmed";
-
     private final ReviewRepositoryPort reviews;
     private final Clock clock;
 
@@ -49,7 +47,7 @@ public final class ReviewService implements ReviewProposalUseCase {
                 return new DecisionResult(Outcome.REFUSED, refused.getMessage());
             }
             List<Allocation> superseded = group.otherProposals().stream()
-                    .map(a -> a.reject(reviewer, now, SUPERSEDED))
+                    .map(a -> a.reject(reviewer, now, Allocation.SUPERSEDED))
                     .toList();
             reviews.recordConfirmation(group, confirmed, settled, superseded,
                     InvoiceEvents.between(group.invoices(), settled, now));

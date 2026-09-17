@@ -4,6 +4,7 @@
 <head th:replace="~{layout :: head(title=${detail.invoice().number()})}"></head>
 <body>
 <header th:replace="~{layout :: topbar(active='invoices')}"></header>
+<div th:replace="~{layout :: demo-banner}"></div>
 
 <main class="page" th:with="invoice=${detail.invoice()}">
     <p><a th:href="@{/invoices}">← All invoices</a></p>

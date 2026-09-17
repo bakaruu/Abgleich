@@ -1,0 +1,108 @@
+name: Deploy demo
+
+# After CI passed on main: build the image, push it to GitHub Container Registry, roll it out on the VPS and run
+# the Playwright smoke test against the public URL. Does nothing until the repository variables below are set,
+# so forks and a repository without a server stay green. Setup: deploy/README.md.
+#
+# Variables: ABGLEICH_DEMO_HOST, ABGLEICH_DEMO_USER, ABGLEICH_DEMO_URL
+# Secrets:   ABGLEICH_DEMO_SSH_KEY (private key of the deploy user), ABGLEICH_DEMO_KNOWN_HOSTS (ssh-keyscan output)
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Build and push image
+    if: ${{ vars.ABGLEICH_DEMO_HOST != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build the jar (tests already passed in CI)
+        run: ./gradlew :bootstrap:bootJar --console=plain
+      - id: tag
+        name: Image tag
+        run: echo "tag=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Build and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          image="ghcr.io/$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')/abgleich"
+          echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          docker build -f deploy/Dockerfile -t "${image}:${TAG}" -t "${image}:latest" .
+          docker push --all-tags "${image}"
+
+  deploy:
+    name: Roll out on the VPS
+    needs: image
+    runs-on: ubuntu-latest
+    environment: demo
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Configure SSH with a pinned host key
+        env:
+          SSH_KEY: ${{ secrets.ABGLEICH_DEMO_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.ABGLEICH_DEMO_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${KNOWN_HOSTS}" > ~/.ssh/known_hosts
+      - name: Copy compose, proxy and dashboard files
+        env:
+          TARGET: ${{ vars.ABGLEICH_DEMO_USER }}@${{ vars.ABGLEICH_DEMO_HOST }}
+        run: |
+          scp -i ~/.ssh/deploy_key -r deploy/compose.demo.yaml deploy/Caddyfile deploy/prometheus.yml deploy/grafana \
+            "${TARGET}:/opt/abgleich/"
+      - name: Pull and restart
+        env:
+          TARGET: ${{ vars.ABGLEICH_DEMO_USER }}@${{ vars.ABGLEICH_DEMO_HOST }}
+          TAG: ${{ needs.image.outputs.tag }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "${TARGET}" \
+            "cd /opt/abgleich && export ABGLEICH_IMAGE_TAG=${TAG} \
+             && docker compose -f compose.demo.yaml pull \
+             && docker compose -f compose.demo.yaml up -d --wait --remove-orphans"
+
+  smoke:
+    name: Smoke test the public demo
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Chromium for Playwright
+        run: ./gradlew :smoke-tests:installBrowser --console=plain
+      - name: Visitor journey against the demo
+        run: ./gradlew :smoke-tests:smokeTest -Psmoke.baseUrl=${{ vars.ABGLEICH_DEMO_URL }} --console=plain

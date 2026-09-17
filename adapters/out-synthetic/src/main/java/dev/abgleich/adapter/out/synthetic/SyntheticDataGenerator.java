@@ -117,7 +117,7 @@ public final class SyntheticDataGenerator {
         regular.credit("EXCH" + ymd + "0105", new Payment(amount("CHF", 20_00, 300_00), customers.get(11), null, "Spende"));
         labels.add(new Label(fileName, "EXCH" + ymd + "0105", null, Expected.NO_INVOICE));
 
-        return new ExampleFile(fileName, "Swiss camt.053 with two accounts: QR-bill payments, a batch booking, "
+        return new ExampleFile(fileName, "CH", "Swiss camt.053 with two accounts: QR-bill payments, a batch booking, "
                 + "a partial payment, a mistyped reference and a bank fee", camt.toBytes());
     }
 
@@ -153,7 +153,7 @@ public final class SyntheticDataGenerator {
         account.charge(Money.eur("3.50"), 4711, "COMISION MANTENIMIENTO");
         labels.add(new Label(fileName, "movement-7", null, Expected.DEBIT));
 
-        return new ExampleFile(fileName, "Spanish Norma 43 in ISO-8859-1: creditor references, an invoice number "
+        return new ExampleFile(fileName, "ES", "Spanish Norma 43 in ISO-8859-1: creditor references, an invoice number "
                 + "in the concept, a name with Ñ, two identical transfers and a commission", norma43.toBytes());
     }
 

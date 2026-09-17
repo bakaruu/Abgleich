@@ -1,0 +1,20 @@
+# The public demo behind Caddy. Everything a visitor stores is synthetic by request and deleted every night.
+server:
+  # Caddy forwards the client address; Tomcat trusts it only from private networks such as the compose network.
+  forward-headers-strategy: native
+
+management:
+  server:
+    port: 8081                  # metrics and health stay inside the compose network, Caddy never routes here
+
+abgleich:
+  demo:
+    enabled: true
+    grafana-url: /grafana/
+  rate-limit:
+    enabled: true
+  # B44: no SFTP drop and no bank download on the public demo.
+  sftp:
+    enabled: false
+  bank-api:
+    enabled: false

@@ -67,7 +67,7 @@ class ReviewServiceTest {
                 .satisfies(event -> assertThat(event.number()).isEqualTo(invoice.number()));
         assertThat(reviews.superseded).singleElement().satisfies(a -> {
             assertThat(a.status()).isEqualTo(AllocationStatus.REJECTED);
-            assertThat(a.decisionNote()).isEqualTo(ReviewService.SUPERSEDED);
+            assertThat(a.decisionNote()).isEqualTo(Allocation.SUPERSEDED);
         });
     }
 

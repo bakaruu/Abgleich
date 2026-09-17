@@ -24,8 +24,16 @@
             <span class="count" th:if="${pendingReview > 0}" th:text="${pendingReview}">3</span></a>
         <a th:href="@{/invoices}" th:classappend="${active == 'invoices'} ? 'active'"
            th:attr="aria-current=${active == 'invoices'} ? 'page' : null">Invoices</a>
-        <span class="soon" title="Arrives in phase F4">Summary</span>
+        <a th:href="@{/summary}" th:classappend="${active == 'summary'} ? 'active'"
+           th:attr="aria-current=${active == 'summary'} ? 'page' : null">Summary</a>
     </nav>
 </header>
+
+<!--/* B43: on the public demo every page says that only synthetic data belongs here and how long it stays. */-->
+<div class="demo-banner" role="note" th:fragment="demo-banner" th:if="${demoMode}">
+    <strong>Public demo with synthetic data.</strong>
+    <span>Do not upload real bank statements or invoices: everything is deleted every night.</span>
+    <a th:if="${repositoryUrl != null}" th:href="${repositoryUrl}">Source code and bug catalogue</a>
+</div>
 </body>
 </html>

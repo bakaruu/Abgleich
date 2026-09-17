@@ -49,7 +49,9 @@ class HexagonalRulesTest {
                 "dev.abgleich.adapter.out.synthetic",
                 "dev.abgleich.adapter.out.synthetic.evaluation",
                 "dev.abgleich.bootstrap",
-                "dev.abgleich.bootstrap.config"))
+                "dev.abgleich.bootstrap.config",
+                "dev.abgleich.bootstrap.metrics",
+                "dev.abgleich.bootstrap.web"))
                 .allSatisfy(pkg -> assertThat(ALL.stream().anyMatch(c -> c.getPackageName().equals(pkg)))
                         .as("production classes in %s", pkg)
                         .isTrue());

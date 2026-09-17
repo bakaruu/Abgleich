@@ -250,3 +250,13 @@ nav .count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left
 .invoice-form label { display: grid; gap: 4px; font-size: 14px; font-weight: 600; }
 .invoice-form input, .invoice-form select { font: inherit; font-weight: 400; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 0; }
 .invoice-form .actions { align-self: end; }
+
+/* Phase F4: summary screen and public demo */
+.examples form { flex-wrap: wrap; }
+.demo-banner { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 10px 24px; font-size: 14.5px; color: var(--warn); background: var(--warn-bg); border-bottom: 1px solid var(--rule); }
+.summary-figures dd a { font-size: 18px; font-weight: 650; }
+.table-note { margin-top: 8px; }
+.summary-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 32px; }
+.summary-columns p { margin: 0 0 8px; }
+.channel-list { list-style: none; padding: 0; margin: 0; max-width: 320px; }
+.channel-list li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--rule); }

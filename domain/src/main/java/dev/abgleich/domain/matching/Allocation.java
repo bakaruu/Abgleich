@@ -31,6 +31,8 @@ public record Allocation(
         long version) {
 
     public static final String SYSTEM = "system";
+    /** Note of a proposal rejected because another proposal for the same payment was confirmed. */
+    public static final String SUPERSEDED = "Another proposal for this payment was confirmed";
     private static final int MAX_TEXT_LENGTH = 500;
 
     public Allocation {

@@ -1,11 +1,14 @@
 package dev.abgleich.bootstrap.config;
 
 import dev.abgleich.adapter.in.scheduler.OutboxRelayJob;
+import dev.abgleich.adapter.in.scheduler.OutboxRetentionJob;
 import dev.abgleich.adapter.out.kafka.KafkaInvoiceEventPublisher;
 import dev.abgleich.adapter.out.postgres.JdbcOutboxRepository;
 import dev.abgleich.application.port.in.PublishEventsUseCase;
+import dev.abgleich.application.port.in.PurgePublishedEventsUseCase;
 import dev.abgleich.application.port.out.EventPublisherPort;
 import dev.abgleich.application.port.out.OutboxRepositoryPort;
+import dev.abgleich.application.service.OutboxRetentionService;
 import dev.abgleich.application.service.PublishEventsService;
 import java.time.Clock;
 import java.time.Duration;
@@ -17,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaTemplate;
 
-/** Wires the outbox and its relay to Kafka (B23). */
+/** Wires the outbox, its relay to Kafka (B23) and the retention of published events. */
 @Configuration(proxyBeanMethods = false)
 class EventsConfiguration {
 
@@ -41,6 +44,17 @@ class EventsConfiguration {
     @Bean
     OutboxRelayJob outboxRelayJob(PublishEventsUseCase publishEvents) {
         return new OutboxRelayJob(publishEvents);
+    }
+
+    @Bean
+    OutboxRetentionService outboxRetentionService(OutboxRepositoryPort outbox,
+            @Value("${abgleich.outbox.retention}") Duration retention, Clock clock) {
+        return new OutboxRetentionService(outbox, retention, clock);
+    }
+
+    @Bean
+    OutboxRetentionJob outboxRetentionJob(PurgePublishedEventsUseCase purgePublishedEvents) {
+        return new OutboxRetentionJob(purgePublishedEvents);
     }
 
     /** Keyed by invoice id: the partitions keep the order of the events of each invoice. */

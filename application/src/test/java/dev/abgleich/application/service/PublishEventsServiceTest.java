@@ -160,5 +160,10 @@ class PublishEventsServiceTest {
         public long countUnpublished() {
             return events.keySet().stream().filter(id -> !publishedAt.containsKey(id)).count();
         }
+
+        @Override
+        public int deletePublishedBefore(Instant publishedBefore) {
+            throw new UnsupportedOperationException("not used by the relay");
+        }
     }
 }

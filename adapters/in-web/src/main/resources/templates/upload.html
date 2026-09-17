@@ -4,6 +4,7 @@
 <head th:replace="~{layout :: head(title='Upload statement')}"></head>
 <body>
 <header th:replace="~{layout :: topbar(active='upload')}"></header>
+<div th:replace="~{layout :: demo-banner}"></div>
 
 <main class="page">
     <section class="intro">
@@ -28,7 +29,7 @@
     <section class="examples" aria-labelledby="examples-title">
         <div>
             <h2 id="examples-title">No files at hand?</h2>
-            <p class="hint">Load synthetic invoices with a Swiss and a Spanish statement that pay them, or download
+            <p class="hint">Load synthetic invoices with the statements that pay them, Swiss, Spanish or both, or download
                 the files and upload them yourself. Loading twice changes nothing.</p>
             <ul class="downloads">
                 <li th:each="file : ${exampleFiles}">
@@ -39,7 +40,9 @@
         </div>
         <form th:action="@{/examples}" method="post" th:hx-post="@{/examples}" hx-target="#result"
               hx-swap="innerHTML" hx-disabled-elt="find button" hx-indicator="find .progress">
-            <button type="submit" class="secondary">Load example</button>
+            <button type="submit" class="secondary" name="country" value="CH">Load Swiss example</button>
+            <button type="submit" class="secondary" name="country" value="ES">Load Spanish example</button>
+            <button type="submit" class="secondary">Load both</button>
             <span class="progress htmx-indicator" role="status">Loading…</span>
         </form>
     </section>

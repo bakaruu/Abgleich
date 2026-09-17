@@ -11,7 +11,16 @@ import java.util.Optional;
  */
 public interface ExampleDataUseCase {
 
+    /** Loads the Swiss and the Spanish example. */
     ExampleLoaded load();
+
+    /**
+     * Loads only the example of one country: its invoices and its statement file.
+     *
+     * @param country ISO 3166 code, such as CH or ES
+     * @throws IllegalArgumentException if there is no example for the country
+     */
+    ExampleLoaded load(String country);
 
     List<ExampleFile> files();
 

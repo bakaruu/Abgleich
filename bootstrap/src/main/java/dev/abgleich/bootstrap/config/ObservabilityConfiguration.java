@@ -1,0 +1,20 @@
+package dev.abgleich.bootstrap.config;
+
+import dev.abgleich.application.port.in.SummaryQuery;
+import dev.abgleich.bootstrap.metrics.ReconciliationMetrics;
+import java.time.Clock;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Business metrics for Prometheus at {@code /actuator/prometheus}. Import counts and durations come from the
+ * decorator around statement processing; everything else is read from the database on each scrape.
+ */
+@Configuration(proxyBeanMethods = false)
+class ObservabilityConfiguration {
+
+    @Bean
+    ReconciliationMetrics reconciliationMetrics(SummaryQuery summaries, Clock clock) {
+        return new ReconciliationMetrics(summaries, clock);
+    }
+}

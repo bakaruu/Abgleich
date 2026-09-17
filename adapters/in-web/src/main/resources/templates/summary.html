@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--/* Figures only; no text from bank files is shown here. Everything is still escaped with th:text (B32). */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(title='Summary')}"></head>
+<body>
+<header th:replace="~{layout :: topbar(active='summary')}"></header>
+<div th:replace="~{layout :: demo-banner}"></div>
+
+<main class="page" th:with="payments=${summary.payments()}">
+    <section class="intro">
+        <h1>Summary</h1>
+        <p>Only incoming payments count: a debit never pays an invoice. Only exact references (R1) are settled
+            without a person; every other rule proposes and waits for a decision.</p>
+    </section>
+
+    <dl class="figures summary-figures">
+        <div>
+            <dt>Settled automatically</dt>
+            <dd><span class="num" th:text="|${payments.autoReconciledPercent()} %|">36.8 %</span>
+                <small th:text="|${payments.autoConfirmed()} of ${payments.credits()} payments, by rule R1|">7 of 19
+                    payments</small></dd>
+        </div>
+        <div>
+            <dt>Confirmed after review</dt>
+            <dd><span class="num" th:text="${payments.confirmedByReview()}">2</span>
+                <small>payments a person confirmed</small></dd>
+        </div>
+        <div>
+            <dt>Waiting for review</dt>
+            <dd><a class="num" th:href="@{/review}" th:text="${payments.waitingForReview()}">6</a>
+                <small th:each="amount : ${summary.waitingForReviewAmounts()}" th:text="${amount}">CHF 1200.00</small></dd>
+        </div>
+        <div>
+            <dt>Unidentified money</dt>
+            <dd><span class="num" th:text="${payments.unmatched()}">4</span>
+                <small th:if="${summary.unmatchedAmounts().isEmpty()}">nothing unidentified</small>
+                <small th:each="amount : ${summary.unmatchedAmounts()}" th:text="${amount}">EUR 1210.00</small></dd>
+        </div>
+        <div>
+            <dt>Reversed by the bank</dt>
+            <dd><span class="num" th:text="${payments.reversed()}">0</span>
+                <small>confirmed payments undone later</small></dd>
+        </div>
+    </dl>
+
+    <h2 class="section-title" id="rules-title">Rules</h2>
+    <div class="table-wrap">
+        <table aria-labelledby="rules-title">
+            <thead>
+            <tr>
+                <th scope="col">Rule</th>
+                <th scope="col" class="right">Confidence</th>
+                <th scope="col" class="right">Settled automatically</th>
+                <th scope="col" class="right">Confirmed</th>
+                <th scope="col" class="right">Rejected</th>
+                <th scope="col" class="right">Waiting</th>
+                <th scope="col" class="right">Reviewers agree</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="rule : ${summary.rules()}">
+                <td><span class="rule" th:text="${rule.rule()}">R4</span></td>
+                <td class="right num" th:text="${rule.rule().confidence().value()}">0.80</td>
+                <td class="right num" th:text="${rule.autoConfirmed()}">0</td>
+                <td class="right num" th:text="${rule.confirmed()}">1</td>
+                <td class="right num" th:text="${rule.rejected()}">0</td>
+                <td class="right num" th:text="${rule.pending()}">2</td>
+                <td class="right num" th:text="${rule.reviewerAgreementPercent().isPresent()}
+                        ? |${rule.reviewerAgreementPercent().get()} %| : '—'">100.0 %</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="hint table-note">Proposals are counted per decision: one payment for several invoices (R6) counts
+        once. A proposal set aside because another one for the same payment was confirmed is not a rejection.</p>
+
+    <div class="summary-columns">
+        <section aria-labelledby="channels-title">
+            <h2 class="section-title" id="channels-title">Statement files by channel</h2>
+            <p class="empty" th:if="${summary.imports().isEmpty()}">No statements imported yet.</p>
+            <ul class="channel-list" th:unless="${summary.imports().isEmpty()}">
+                <li th:each="channel : ${summary.imports()}">
+                    <span th:text="${channel.source()}">WEB</span>
+                    <span class="num" th:text="${channel.files()}">2</span>
+                </li>
+            </ul>
+        </section>
+        <section aria-labelledby="events-title">
+            <h2 class="section-title" id="events-title">Events to the ERP</h2>
+            <p><span class="num" th:text="${summary.outboxPending()}">0</span> <span>waiting in the outbox</span></p>
+            <p class="hint">Paid and reopened invoices are stored with the payment and published to Kafka a few
+                seconds later.</p>
+            <p th:if="${grafanaUrl != null}"><a th:href="${grafanaUrl}">Live metrics in Grafana</a></p>
+        </section>
+    </div>
+</main>
+</body>
+</html>

@@ -35,8 +35,25 @@ public final class ExampleDataService implements ExampleDataUseCase {
     @Override
     public ExampleLoaded load() {
         ExampleData data = examples.exampleData();
+        return load(data.invoices(), data.files());
+    }
+
+    @Override
+    public ExampleLoaded load(String country) {
+        Objects.requireNonNull(country, "country");
+        ExampleData data = examples.exampleData();
+        List<ExampleFile> files = data.files().stream().filter(file -> file.country().equals(country)).toList();
+        if (files.isEmpty()) {
+            throw new IllegalArgumentException("There is no example for country " + country);
+        }
+        return load(data.invoices().stream()
+                .filter(invoice -> invoice.creditorAccount().countryCode().equals(country))
+                .toList(), files);
+    }
+
+    private ExampleLoaded load(List<RegisterInvoiceCommand> invoices, List<ExampleFile> files) {
         int registered = 0;
-        for (RegisterInvoiceCommand invoice : data.invoices()) {
+        for (RegisterInvoiceCommand invoice : invoices) {
             try {
                 registerInvoice.register(invoice);
                 registered++;
@@ -44,11 +61,11 @@ public final class ExampleDataService implements ExampleDataUseCase {
                 // Loaded before: the database refused the number (B24), which is exactly what we want.
             }
         }
-        List<FileProcessed> processed = data.files().stream()
+        List<FileProcessed> processed = files.stream()
                 .map(file -> new FileProcessed(file, processStatement.process(new ImportStatementCommand(
                         ImportSource.EXAMPLE, () -> new ByteArrayInputStream(file.content())))))
                 .toList();
-        return new ExampleLoaded(registered, data.invoices().size() - registered, processed);
+        return new ExampleLoaded(registered, invoices.size() - registered, processed);
     }
 
     @Override

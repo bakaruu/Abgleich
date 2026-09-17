@@ -116,7 +116,7 @@ class ChannelEquivalenceTest {
 
     /** The example camt.053 holds both Swiss accounts; the Norma 43 file the Spanish one. */
     private static List<String> accountsOf(ExampleFile file) {
-        return file.name().contains("norma43")
+        return file.country().equals("ES")
                 ? List.of("ES9121000418450200051332")
                 : List.of("CH4431999123000889012", "CH9300762011623852957");
     }

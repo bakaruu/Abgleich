@@ -29,6 +29,7 @@ dependencies {
     implementation("org.springframework.integration:spring-integration-sftp")
     implementation(libs.shedlock.spring)
     implementation(libs.shedlock.provider.jdbc)
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
 
@@ -50,4 +51,9 @@ sourceSets.test {
 // -Pgolden.update=true rewrites the golden files instead of comparing against them.
 tasks.test {
     systemProperty("golden.update", providers.gradleProperty("golden.update").getOrElse("false"))
+}
+
+// A fixed name, so the container image build does not depend on the version.
+tasks.bootJar {
+    archiveFileName = "abgleich.jar"
 }

@@ -1,0 +1,4 @@
+# The image only needs the built jar (see deploy/Dockerfile). Everything else stays out of the build context,
+# including .env files with secrets (B45).
+*
+!bootstrap/build/libs/abgleich.jar

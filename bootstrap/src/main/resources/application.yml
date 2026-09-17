@@ -36,7 +36,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: abgleich
 
 logging:
   structured:
@@ -59,6 +62,21 @@ abgleich:
   outbox:
     relay-interval: PT2S
     acknowledgement-timeout: PT15S
+    retention: P30D             # published events are deleted after this; unpublished ones never
+    retention-cron: "0 30 3 * * *"
+  # Public demo (profile "demo"): banner, nightly reset and disk quota (B43, B44).
+  demo:
+    enabled: false
+    reset-cron: "0 0 2 * * *"
+    quota-check-interval: PT10M
+    max-stored-data: 500MB
+    repository-url: https://github.com/bakaruu/Abgleich
+    grafana-url:
+  # B44: changes (POST, PUT, PATCH, DELETE) per client address.
+  rate-limit:
+    enabled: false
+    changes-per-window: 20
+    window: PT1M
   # B25: files are taken only with a <name>.done marker, then moved to processed/ or error/.
   sftp:
     enabled: ${ABGLEICH_SFTP_ENABLED:false}

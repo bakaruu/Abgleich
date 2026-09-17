@@ -1,0 +1,24 @@
+# HTTPS with automatic certificates for the domain in ABGLEICH_DOMAIN. For a local try without a domain, set
+# ABGLEICH_DOMAIN=:80 and open http://localhost.
+
+{$ABGLEICH_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Read-only dashboards. The application sets its own strict headers, including the CSP (B32).
+	handle /grafana* {
+		reverse_proxy grafana:3000
+	}
+
+	# Only the public port of the application: health and metrics on port 8081 are never routed (B44).
+	handle {
+		request_body {
+			max_size 21MB
+		}
+		reverse_proxy app:8080
+	}
+}

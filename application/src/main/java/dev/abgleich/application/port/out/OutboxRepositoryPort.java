@@ -22,6 +22,13 @@ public interface OutboxRepositoryPort {
 
     long countUnpublished();
 
+    /**
+     * Deletes events published before the given instant. Unpublished events stay, whatever their age.
+     *
+     * @return the number of deleted events
+     */
+    int deletePublishedBefore(Instant publishedBefore);
+
     /** @param attempts failed publishing attempts so far */
     record PendingEvent(InvoiceEvent event, int attempts) {
         public PendingEvent {

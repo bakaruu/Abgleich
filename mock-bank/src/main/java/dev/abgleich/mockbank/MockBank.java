@@ -78,7 +78,7 @@ public final class MockBank implements AutoCloseable {
         MockBank bank = start(port, token);
         LocalDate today = LocalDate.now();
         for (ExampleFile file : new SyntheticExampleData().exampleData().files()) {
-            List<String> accounts = file.name().contains("norma43")
+            List<String> accounts = file.country().equals("ES")
                     ? List.of("ES9121000418450200051332")
                     : List.of("CH4431999123000889012", "CH9300762011623852957");
             accounts.forEach(account -> bank.publish(account, today, file.content()));

@@ -1,0 +1,107 @@
+{
+  "uid": "abgleich-reconciliation",
+  "title": "Abgleich reconciliation",
+  "description": "Synthetic demo data. Every figure is read from the application's database or counted per statement file.",
+  "tags": ["abgleich"],
+  "timezone": "utc",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Settled automatically",
+      "description": "Share of incoming payments rule R1 settled without a person (B27).",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "max(abgleich_auto_reconciliation_ratio)" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 1, "min": 0, "max": 1 }, "overrides": [] },
+      "options": { "colorMode": "none", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Waiting for review",
+      "description": "Incoming payments with proposals a person has to decide.",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "max(abgleich_review_queue_size)" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 }, "overrides": [] },
+      "options": { "colorMode": "none", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Unidentified money",
+      "description": "Incoming payments nobody could match yet, per currency.",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "max by (currency) (abgleich_unmatched_amount)", "legendFormat": "{{currency}}" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 }, "overrides": [] },
+      "options": { "colorMode": "none", "graphMode": "none", "textMode": "value_and_name", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Events waiting in the outbox",
+      "description": "InvoicePaid and InvoiceReopened events not published to Kafka yet (B23). Should stay near zero.",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "max(abgleich_outbox_pending)" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 50 }] }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 5,
+      "type": "bargauge",
+      "title": "Proposals per rule and outcome",
+      "description": "Proposal groups; a payment for several invoices (R6) counts once.",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "max by (rule, outcome) (abgleich_allocations) > 0", "legendFormat": "{{rule}} {{outcome}}", "instant": true }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "min": 0 }, "overrides": [] },
+      "options": { "orientation": "horizontal", "displayMode": "basic", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Statement files per channel",
+      "description": "Files processed per hour by channel: web, REST, SFTP, bank API, example.",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum by (source) (increase(abgleich_imports_total[1h]))", "legendFormat": "{{source}}" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "custom": { "drawStyle": "bars", "fillOpacity": 60 } }, "overrides": [] }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Rejected statement files",
+      "description": "Files refused as a whole, for example because the balances do not add up (B11).",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum by (source) (increase(abgleich_imports_total{result=\"rejected\"}[1h]))", "legendFormat": "{{source}}" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "custom": { "drawStyle": "bars", "fillOpacity": 60 } }, "overrides": [] }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Import and reconciliation time per file",
+      "description": "Average seconds from receiving a file to the end of its reconciliation, by format.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum by (format) (rate(abgleich_import_duration_seconds_sum[15m])) / sum by (format) (rate(abgleich_import_duration_seconds_count[15m]))", "legendFormat": "{{format}}" }],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    }
+  ]
+}

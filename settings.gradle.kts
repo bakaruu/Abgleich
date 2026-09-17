@@ -22,4 +22,5 @@ include(
     "bootstrap",
     "architecture-tests",
     "mock-bank",
+    "smoke-tests",
 )

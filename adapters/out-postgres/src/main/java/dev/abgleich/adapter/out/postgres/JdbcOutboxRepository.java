@@ -66,6 +66,15 @@ public final class JdbcOutboxRepository implements OutboxRepositoryPort {
                 .single());
     }
 
+    @Override
+    public int deletePublishedBefore(Instant publishedBefore) {
+        return read("Published events could not be deleted", () -> client.sql("""
+                        delete from outbox_event where published_at is not null and published_at < ?
+                        """)
+                .param(OffsetDateTime.ofInstant(publishedBefore, ZoneOffset.UTC))
+                .update());
+    }
+
     private static <T> T read(String failure, Supplier<T> query) {
         try {
             return query.get();

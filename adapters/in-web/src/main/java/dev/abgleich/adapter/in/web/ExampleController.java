@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /** "Load example" and the downloadable example files on the upload screen. */
 @Controller
@@ -27,9 +28,19 @@ class ExampleController {
         this.reports = reports;
     }
 
+    /** Without a country both examples are loaded; with CH or ES only that country's invoices and statement. */
     @PostMapping("/examples")
-    String load(@RequestHeader(name = "HX-Request", required = false) String htmxRequest, Model model) {
-        ExampleLoaded loaded = examples.load();
+    String load(@RequestParam(name = "country", required = false) String country,
+            @RequestHeader(name = "HX-Request", required = false) String htmxRequest, Model model) {
+        ExampleLoaded loaded;
+        if (country == null || country.isBlank()) {
+            loaded = examples.load();
+        } else if (examples.files().stream().anyMatch(file -> file.country().equals(country))) {
+            loaded = examples.load(country);
+        } else {
+            model.addAttribute("error", "There is no example for that country.");
+            return htmxRequest != null ? StatementUploadController.RESULT_FRAGMENT : StatementUploadController.VIEW;
+        }
         model.addAttribute("example", loaded);
         model.addAttribute("results", loaded.files().stream()
                 .map(file -> UploadView.of(file.processed(), reports, file.file().name()))
