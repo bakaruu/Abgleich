@@ -67,6 +67,33 @@ It was 86 % when first measured, and the survivors were worth reading: every thr
 tested comfortably on one side of it, so moving the boundary by one cent, one day or one character broke nothing
 the tests could see. `MatchingBoundariesTest` now sits exactly on each of them. CI runs this on every push.
 
+### And so is the speed
+
+`./gradlew benchmark -Pbenchmark.transactions=5000` generates a statement far larger than a real day's file,
+imports it and prints where the time goes. Measured on a Ryzen 9 9950X3D with PostgreSQL in Docker; what matters is
+the shape, not the absolute numbers.
+
+| Statement | Parse only | Match in memory | Import and reconcile, end to end |
+|-----------|-----------:|----------------:|---------------------------------:|
+| 1 000 transactions | 40 ms · 25 000/s | 1.1 s · 906/s | 6.3 s · 158/s |
+| 2 000 transactions | 68 ms · 29 000/s | 2.7 s · 737/s | 17.0 s · 118/s |
+| 5 000 transactions | 154 ms · 32 000/s | 13.8 s · 361/s | 70.3 s · 71/s |
+
+Parsing is not the problem: camt.053 streams through StAX at about 25 MB/s and never holds the file in memory.
+The cost is matching, and it grows with the ledger, because every payment is compared against every open invoice of
+the account. A real day's file (a few hundred lines against a few hundred open invoices) is the first row and takes
+seconds; the table is deliberately worse than reality to show the curve.
+
+Measuring it paid for itself immediately: the profile showed rule R5 comparing company names — the most expensive
+thing the matcher does — *before* checking the cheap conditions that would discard the invoice anyway, and comparing
+the same two names once per invoice instead of once per pair. Fixing both made matching **7× faster** (2 000
+transactions: 19.4 s → 2.7 s) and the whole import **1.6× faster**, with the same 2 771 decisions, the same
+precision over the labelled dataset and the same golden file.
+
+The remaining growth is by design, not by accident: the next step for a real ledger is narrowing candidates in SQL
+(by reference and amount) instead of reading every open invoice, and it is not done because nothing here needs it
+yet.
+
 ## Edge cases handled
 
 Every failure mode the design protects against has an ID and at least one test named after it. The build checks
@@ -159,6 +186,7 @@ Requirements: JDK 21 and Docker.
 ./gradlew build              # compile and all tests (Testcontainers starts PostgreSQL and Kafka)
 ./gradlew evaluateMatching   # precision per matching rule over 300 labelled payments
 ./gradlew :domain:pitest    # mutation testing: do the tests notice when a rule changes?
+./gradlew benchmark         # parse, match and import a large statement; prints where the time goes
 docker compose up -d         # PostgreSQL, Kafka and an SFTP drop, all named abgleich-*-local-*
 ./gradlew :bootstrap:bootRun
 ```

@@ -12,6 +12,7 @@ import java.math.RoundingMode;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -130,11 +131,17 @@ final class MatchingRules {
             return debtorNameInText(payment, invoices);
         }
         List<Candidate> candidates = new ArrayList<>();
+        Similarities similarities = new Similarities(payment.counterpartyName());
         for (Invoice invoice : open(invoices)) {
-            BigDecimal similarity = TextSimilarity.nameSimilarity(payment.counterpartyName(), invoice.debtorName());
+            // The cheap conditions first: comparing two names costs far more than a date or an amount, and with a
+            // large open ledger this rule would otherwise compare every name on every payment.
             long days = Math.abs(ChronoUnit.DAYS.between(invoice.dueDate(), payment.bookingDate()));
             int comparison = payment.amount().compareTo(invoice.outstanding());
-            if (similarity.compareTo(policy.nameThreshold()) < 0 || days > policy.dueDateWindowDays() || comparison > 0) {
+            if (days > policy.dueDateWindowDays() || comparison > 0) {
+                continue;
+            }
+            BigDecimal similarity = similarities.of(invoice.debtorName());
+            if (similarity.compareTo(policy.nameThreshold()) < 0) {
                 continue;
             }
             String amountText = comparison == 0
@@ -176,12 +183,12 @@ final class MatchingRules {
     /** R6: one payment for two to five open invoices of one debtor, found by payer name or invoice numbers. */
     private List<Candidate> severalInvoices(PaymentToMatch payment, List<Invoice> invoices) {
         String text = payment.searchableText();
+        Similarities similarities = new Similarities(payment.counterpartyName());
         Map<String, List<Invoice>> byDebtor = new LinkedHashMap<>();
         open(invoices).stream()
                 .filter(invoice -> invoice.outstanding().compareTo(payment.amount()) < 0)
                 .filter(invoice -> InvoiceMentions.mentions(text, invoice.number())
-                        || (payment.counterpartyName() != null && TextSimilarity.nameSimilarity(
-                                payment.counterpartyName(), invoice.debtorName()).compareTo(policy.nameThreshold()) >= 0))
+                        || similarities.of(invoice.debtorName()).compareTo(policy.nameThreshold()) >= 0)
                 .sorted(Comparator.comparing(Invoice::dueDate).thenComparing(invoice -> invoice.number().value()))
                 .forEach(invoice -> byDebtor.computeIfAbsent(TextSimilarity.nameKey(invoice.debtorName()),
                         debtor -> new ArrayList<>()).add(invoice));
@@ -200,6 +207,28 @@ final class MatchingRules {
             }
         }
         return candidates;
+    }
+
+    /**
+     * Comparing two company names is the most expensive thing a rule does, and one ledger holds the same debtor
+     * names over and over, so each pair is compared once per payment. A payment without a payer name never
+     * matches by name, which the constant answer expresses.
+     */
+    private static final class Similarities {
+
+        private final String payer;
+        private final Map<String, BigDecimal> known = new HashMap<>();
+
+        private Similarities(String payer) {
+            this.payer = payer;
+        }
+
+        private BigDecimal of(String debtorName) {
+            if (payer == null) {
+                return BigDecimal.ZERO;
+            }
+            return known.computeIfAbsent(debtorName, name -> TextSimilarity.nameSimilarity(payer, name));
+        }
     }
 
     private static List<Invoice> open(List<Invoice> invoices) {

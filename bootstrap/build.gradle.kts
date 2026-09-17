@@ -57,3 +57,21 @@ tasks.test {
 tasks.bootJar {
     archiveFileName = "abgleich.jar"
 }
+
+// Measured, not guessed: ./gradlew benchmark -Pbenchmark.transactions=20000. Not part of `build`: it takes
+// minutes and its numbers belong to the machine that ran it.
+tasks.test {
+    filter.excludeTestsMatching("dev.abgleich.bootstrap.PerformanceBenchmark")
+}
+
+tasks.register<Test>("benchmark") {
+    group = "verification"
+    description = "Times parsing, invoice registration and a full import of a large statement."
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    filter.includeTestsMatching("dev.abgleich.bootstrap.PerformanceBenchmark")
+    systemProperty("benchmark.transactions",
+            providers.gradleProperty("benchmark.transactions").getOrElse("5000"))
+    testLogging.showStandardStreams = true
+    outputs.upToDateWhen { false }
+}
