@@ -23,4 +23,6 @@ pitest {
     threads = 4
     timestampedReports = false
     outputFormats = listOf("HTML", "XML")
+    // Lower than the domain on purpose: some use cases are only exercised end to end, from `bootstrap`.
+    mutationThreshold = 82
 }

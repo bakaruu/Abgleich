@@ -31,7 +31,8 @@ class SchemaConstraintsTest {
 
     @Container
     static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:17-alpine")
-            .withCreateContainerCmdModifier(cmd -> cmd.withName("abgleich-test-postgres-schema-constraints"));
+            .withCreateContainerCmdModifier(cmd -> cmd.withName(
+                    "abgleich-test-postgres-schema-constraints-" + java.util.UUID.randomUUID().toString().substring(0, 8)));
 
     private Connection connection;
 

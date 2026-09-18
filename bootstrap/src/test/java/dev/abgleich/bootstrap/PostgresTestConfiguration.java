@@ -16,6 +16,7 @@ class PostgresTestConfiguration {
     @ServiceConnection
     PostgreSQLContainer postgres() {
         return new PostgreSQLContainer("postgres:17-alpine")
-                .withCreateContainerCmdModifier(cmd -> cmd.withName("abgleich-test-postgres-application"));
+                .withStartupTimeout(java.time.Duration.ofMinutes(2))
+                .withCreateContainerCmdModifier(cmd -> cmd.withName(TestContainerNames.of("postgres-application")));
     }
 }

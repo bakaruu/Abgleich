@@ -69,6 +69,8 @@ services:
 
   # The native Kafka image starts in a second and needs little memory. Events of the demo are not kept across
   # restarts of the broker: the outbox in PostgreSQL is the durable record (B23).
+  # It is kept here and not in the tests: a native binary depends on the host it runs on, which is known for the
+  # demo server and is not for a CI runner. If it ever exits immediately here, swap it for apache/kafka:4.2.1.
   kafka:
     image: apache/kafka-native:4.2.1
     container_name: abgleich-demo-kafka-broker

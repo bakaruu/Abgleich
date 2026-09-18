@@ -15,7 +15,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 final class TestDatabase {
 
     private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:17-alpine")
-            .withCreateContainerCmdModifier(cmd -> cmd.withName("abgleich-test-postgres-repositories"));
+            .withCreateContainerCmdModifier(cmd -> cmd.withName(
+                    "abgleich-test-postgres-repositories-" + java.util.UUID.randomUUID().toString().substring(0, 8)));
 
     private static DataSource dataSource;
 

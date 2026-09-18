@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.abgleich.application.DecisionResult;
 import dev.abgleich.application.DecisionResult.Outcome;
+import dev.abgleich.application.StaleDataException;
 import dev.abgleich.application.invoice.RegisterInvoiceCommand;
 import dev.abgleich.application.invoice.port.out.InvoiceRepositoryPort;
 import dev.abgleich.application.reconciliation.port.in.ReconciliationRun;
@@ -28,6 +29,7 @@ class RegisterInvoiceServiceTest {
     private static final Iban ACCOUNT = Iban.of("CH9300762011623852957");
 
     private final Map<UUID, Invoice> stored = new HashMap<>();
+    private boolean refuseUpdates;
     private final List<Iban> reconciled = new ArrayList<>();
     private final RegisterInvoiceService service = new RegisterInvoiceService(new FakeInvoices(), account -> {
         reconciled.add(account);
@@ -71,6 +73,27 @@ class RegisterInvoiceServiceTest {
         assertThat(service.cancel(id, 7).outcome()).isEqualTo(Outcome.STALE);
     }
 
+    @Test
+    void cancelling_an_invoice_that_is_not_there_says_so_instead_of_failing() {
+        DecisionResult result = service.cancel(UUID.randomUUID(), 0);
+
+        assertThat(result.outcome()).isEqualTo(Outcome.NOT_FOUND);
+        assertThat(result.message()).contains("does not exist");
+    }
+
+    /** B22: the version was right when it was read and wrong when it was written; the decision is refused, not lost. */
+    @Test
+    void a_cancellation_that_loses_the_race_at_the_database_is_stale_too() {
+        UUID id = service.register(command());
+        refuseUpdates = true;
+
+        DecisionResult result = service.cancel(id, 0);
+
+        assertThat(result.outcome()).isEqualTo(Outcome.STALE);
+        assertThat(result.message()).contains("Reload");
+        assertThat(stored.get(id).status()).isEqualTo(InvoiceStatus.OPEN);
+    }
+
     private static RegisterInvoiceCommand command() {
         return new RegisterInvoiceCommand(InvoiceNumber.of("F-2026-0142"), ACCOUNT, "Keller GmbH", Money.chf("480.00"),
                 PaymentReference.none(), LocalDate.of(2026, 9, 30));
@@ -94,6 +117,9 @@ class RegisterInvoiceServiceTest {
 
         @Override
         public void update(Invoice invoice) {
+            if (refuseUpdates) {
+                throw new StaleDataException("The invoice changed while it was being cancelled");
+            }
             stored.put(invoice.id(), invoice);
         }
     }

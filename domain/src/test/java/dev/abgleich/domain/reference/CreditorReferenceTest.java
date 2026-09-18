@@ -3,6 +3,7 @@ package dev.abgleich.domain.reference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import dev.abgleich.domain.checksum.Mod97;
 import org.junit.jupiter.api.Test;
 
 class CreditorReferenceTest {
@@ -36,5 +37,28 @@ class CreditorReferenceTest {
         assertThatThrownBy(() -> CreditorReference.of("RF18" + "1".repeat(22)))
                 .isInstanceOf(InvalidReferenceException.class)
                 .hasMessageContaining("between 5 and 25");
+    }
+
+    /** The ends of the allowed length are valid references, not off-by-one rejections. */
+    @Test
+    void the_shortest_and_the_longest_reference_are_both_accepted() {
+        assertThat(CreditorReference.of("RF" + checkDigitsFor("A")).value()).hasSize(5);
+        assertThat(CreditorReference.of("RF" + checkDigitsFor("1".repeat(21))).value()).hasSize(25);
+    }
+
+    /** Spaces are how banks print references; they are not part of the reference. */
+    @Test
+    void spaces_do_not_count_towards_the_length() {
+        assertThat(CreditorReference.of("RF18 5390 0754 7034").value()).isEqualTo("RF18539007547034");
+    }
+
+    private static String checkDigitsFor(String rest) {
+        for (int candidate = 2; candidate <= 98; candidate++) {
+            String digits = candidate < 10 ? "0" + candidate : String.valueOf(candidate);
+            if (Mod97.remainder(rest + "RF" + digits) == 1) {
+                return digits + rest;
+            }
+        }
+        throw new IllegalStateException("No check digits fit " + rest);
     }
 }

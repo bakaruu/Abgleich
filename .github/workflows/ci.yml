@@ -21,8 +21,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build, architecture rules and bug catalogue tests
         run: ./gradlew build --console=plain
-      - name: Mutation testing of the matching rules
-        run: ./gradlew :domain:pitest --console=plain
+      - name: Mutation testing of the rules and the use cases
+        run: ./gradlew :domain:pitest :application:pitest --console=plain
       - name: Matching precision over the labelled dataset
         run: ./gradlew evaluateMatching --console=plain
 

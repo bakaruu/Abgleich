@@ -77,6 +77,52 @@ class StatementEntryTest {
         assertThat(detail.toString()).doesNotContain("Brunner").contains("CHF 1200.00");
     }
 
+    @Test
+    void B03_a_transaction_of_zero_or_less_is_not_a_payment() {
+        assertThatThrownBy(() -> new TransactionDetail(Money.chf("0.00"), null, null, null, null, null, null))
+                .isInstanceOf(InvalidStatementException.class)
+                .hasMessageContaining("must be positive")
+                .extracting(e -> ((InvalidStatementException) e).reason())
+                .isEqualTo(Reason.INCONSISTENT_ENTRY);
+    }
+
+    /** B07: charges of zero are normal on a domestic payment; a negative charge is the bank paying us. */
+    @Test
+    void charges_may_be_zero_but_never_negative_nor_in_another_currency() {
+        assertThat(new TransactionDetail(Money.chf("100.00"), null, null, null, null, null, Money.chf("0.00")).charges())
+                .isEqualTo(Money.chf("0.00"));
+
+        assertThatThrownBy(() -> new TransactionDetail(
+                Money.chf("100.00"), null, null, null, null, null, Money.chf("-1.00")))
+                .isInstanceOf(InvalidStatementException.class)
+                .extracting(e -> ((InvalidStatementException) e).reason())
+                .isEqualTo(Reason.MIXED_CURRENCIES);
+
+        assertThatThrownBy(() -> new TransactionDetail(
+                Money.chf("100.00"), null, null, null, null, null, Money.eur("2.00")))
+                .isInstanceOf(InvalidStatementException.class)
+                .hasMessageContaining("payment currency");
+    }
+
+    @Test
+    void a_detail_without_an_amount_still_accepts_charges() {
+        TransactionDetail detail = new TransactionDetail(null, null, null, null, null, null, Money.chf("3.00"));
+
+        assertThat(detail.amount()).isNull();
+        assertThat(detail.charges()).isEqualTo(Money.chf("3.00"));
+    }
+
+    @Test
+    void B41_to_string_says_how_long_the_remittance_text_is_without_showing_it() {
+        TransactionDetail withText = new TransactionDetail(Money.chf("10.00"), PaymentReference.none(),
+                "Rechnung 144 Brunner", "Brunner & Co. AG", null, null, null);
+        TransactionDetail withoutText =
+                new TransactionDetail(Money.chf("10.00"), PaymentReference.none(), null, null, null, null, null);
+
+        assertThat(withText.toString()).contains("20 chars").contains("***").doesNotContain("Rechnung");
+        assertThat(withoutText.toString()).contains("remittanceText=none").contains("counterpartyName=none");
+    }
+
     private static StatementEntry credit(String amount, TransactionDetail... details) {
         return new StatementEntry(Money.chf(amount), Direction.CREDIT, BOOKED, null, null, false, List.of(details));
     }

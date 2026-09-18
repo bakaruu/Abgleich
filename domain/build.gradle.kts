@@ -12,6 +12,6 @@ pitest {
     threads = 4
     timestampedReports = false
     outputFormats = listOf("HTML", "XML")
-    // The score reached once the boundary tests were written. Dropping below it means a rule lost its safety net.
-    mutationThreshold = 85
+    // The score the boundary and rule tests reached. Below it, a rule has lost part of its safety net.
+    mutationThreshold = 90
 }

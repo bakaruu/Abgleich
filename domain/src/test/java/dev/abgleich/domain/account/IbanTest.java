@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.abgleich.domain.reference.InvalidReferenceException;
+import dev.abgleich.domain.checksum.Mod97;
 import org.junit.jupiter.api.Test;
 
 class IbanTest {
@@ -19,6 +20,31 @@ class IbanTest {
     @Test
     void a_regular_swiss_iban_is_not_a_qr_iban() {
         assertThat(Iban.of("CH93 0076 2011 6238 5295 7").isQrIban()).isFalse();
+    }
+
+    /** The QR-IID range is 30000 to 31999: both ends are QR-IBANs, one step outside is an ordinary account. */
+    @Test
+    void the_ends_of_the_qr_iban_range_are_qr_ibans() {
+        assertThat(swissIbanWithIid(30000).isQrIban()).isTrue();
+        assertThat(swissIbanWithIid(31999).isQrIban()).isTrue();
+        assertThat(swissIbanWithIid(29999).isQrIban()).isFalse();
+        assertThat(swissIbanWithIid(32000).isQrIban()).isFalse();
+    }
+
+    /** Only Swiss and Liechtenstein banks issue QR-IBANs, whatever the digits in that position say. */
+    @Test
+    void the_same_digits_in_another_country_are_not_a_qr_iban() {
+        assertThat(ibanWithIid("ES", 30000).isQrIban()).isFalse();
+    }
+
+    private static Iban swissIbanWithIid(int iid) {
+        return ibanWithIid("CH", iid);
+    }
+
+    private static Iban ibanWithIid(String country, int iid) {
+        String rest = String.format("%05d", iid) + "000088901";
+        String check = String.format("%02d", 98 - Mod97.remainder(rest + country + "00"));
+        return Iban.of(country + check + rest);
     }
 
     @Test

@@ -108,6 +108,24 @@ class ImportStatementServiceTest {
         assertThat(rejected).hasMessage("The file is larger than 20 MB");
     }
 
+    /** The limit must hold however the parser reads: one byte at a time is as valid as a bulk read. */
+    @Test
+    void B42_the_limit_holds_even_when_the_parser_reads_byte_by_byte() {
+        InputStream endless = new InputStream() {
+            @Override
+            public int read() {
+                return 'x';
+            }
+        };
+        ImportStatementService oneByteAtATime = new ImportStatementService(List.of(new ByteByByteParser()),
+                repository, Clock.fixed(NOW, ZoneOffset.UTC));
+
+        InvalidStatementException rejected = catchThrowableOfType(InvalidStatementException.class,
+                () -> oneByteAtATime.importStatement(new ImportStatementCommand(ImportSource.SFTP, () -> endless)));
+
+        assertThat(rejected.reason()).isEqualTo(Reason.FORBIDDEN_CONTENT);
+    }
+
     @Test
     void B39_unreadable_upload_is_translated_into_a_domain_exception() {
         InvalidStatementException rejected = catchThrowableOfType(InvalidStatementException.class,
@@ -130,6 +148,27 @@ class ImportStatementServiceTest {
     }
 
     /** Recognizes files starting with its marker and reads only the first line, like a real parser that stops early. */
+    /** Reads the whole file one byte at a time, the way a hand-written fixed-width reader might. */
+    private record ByteByByteParser() implements StatementParserPort {
+
+        @Override
+        public boolean canParse(StatementSniff sniff) {
+            return true;
+        }
+
+        @Override
+        public ParsedStatementFile parse(InputStream in) {
+            try {
+                while (in.read() != -1) {
+                    // keep going: the stream is endless, so the size limit must stop us
+                }
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+            throw new IllegalStateException("The size limit should have stopped this read");
+        }
+    }
+
     private record FakeParser(String marker) implements StatementParserPort {
 
         @Override

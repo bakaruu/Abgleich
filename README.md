@@ -53,19 +53,25 @@ one becomes a new labelled case ([ADR 0006](docs/adr/0006-matching-rules-and-rev
 
 ### And the tests are measured too
 
-A green suite only proves the tests ran. `./gradlew :domain:pitest` changes the domain on purpose — inverting
-conditions, moving thresholds one step, returning constants — and reports how much of that the tests notice.
+A green suite only proves the tests ran. `./gradlew :domain:pitest :application:pitest` changes the code on purpose
+— inverting conditions, moving thresholds one step, returning constants — and reports how much of that the tests
+notice.
 
-| | |
-|---|---|
-| Mutations of the domain | 497 |
-| Killed by the tests | **88 %** |
-| Test strength (of the mutations the tests reach) | 91 % |
-| The build fails below | 85 % |
+| | Domain | Use cases |
+|---|---:|---:|
+| Mutations | 500 | 209 |
+| Killed by the tests | **92 %** | **86 %** |
+| Test strength (of the mutations the tests reach) | 94 % | 95 % |
+| The build fails below | 90 % | 82 % |
 
-It was 86 % when first measured, and the survivors were worth reading: every threshold in the matching rules was
-tested comfortably on one side of it, so moving the boundary by one cent, one day or one character broke nothing
-the tests could see. `MatchingBoundariesTest` now sits exactly on each of them. CI runs this on every push.
+The domain started at 86 % and the use cases at 64 %, and the survivors were worth reading. Every threshold in the
+matching rules was tested comfortably on one side of it, so moving a boundary by one cent, one day or one character
+broke nothing the tests could see; the search behind rule R6 could have ignored its own limits; loading the example
+twice, cancelling an invoice that lost a race and a summary reporting a negative count were never asserted at all.
+Eight test classes later, those are covered and the score is a number the build defends. CI runs both on every push.
+
+What survives now is mostly what cannot be killed: mutations that change the code without changing its behaviour.
+Chasing those would mean writing tests that assert implementation details, which is how a suite becomes a burden.
 
 ### And so is the speed
 
@@ -185,7 +191,7 @@ Requirements: JDK 21 and Docker.
 ```bash
 ./gradlew build              # compile and all tests (Testcontainers starts PostgreSQL and Kafka)
 ./gradlew evaluateMatching   # precision per matching rule over 300 labelled payments
-./gradlew :domain:pitest    # mutation testing: do the tests notice when a rule changes?
+./gradlew :domain:pitest :application:pitest   # mutation testing: do the tests notice a change?
 ./gradlew benchmark         # parse, match and import a large statement; prints where the time goes
 docker compose up -d         # PostgreSQL, Kafka and an SFTP drop, all named abgleich-*-local-*
 ./gradlew :bootstrap:bootRun
